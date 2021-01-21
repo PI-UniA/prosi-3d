@@ -13,3 +13,14 @@ Um den Container (einmalig) lokal zu erstellen, muss folgender Befehl im Hauptve
 Danach kann der Container jederzeit mit einem interaktiven Terminal gestartet werden:
 
 `docker run -ti prosi3d`
+
+Ansonsten funktioniert auch jede andere Anaconda Installation basierend auf Python 3.8, die die Abhängigkeiten in `env/environment.yml` enthält.
+
+## ToDo
+
+- [x] Virtual Environment
+- [ ] Python-Grundstruktur
+- [ ] Datenvorverarbeitung
+- [ ] Statistische Auswertung
+- [ ] Machine Learning Auswertung
+- [ ] User Frontend
