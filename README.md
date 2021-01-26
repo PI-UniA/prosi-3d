@@ -8,11 +8,15 @@ Im Hauptverzeichnis befindet sich das `Dockerfile`, das die Konfiguration des Co
 
 Um den Container (einmalig) lokal zu erstellen, muss folgender Befehl im Hauptverzeichnis dieses Repositories in einem Terminal (Linux / OS X) oder der PowerShell ausgeführt werden:
 
-`docker build .`
+```bash
+docker build .
+```
 
 Danach kann der Container jederzeit mit einem interaktiven Terminal gestartet werden:
 
-`docker run -ti prosi3d`
+```bash
+docker run -ti prosi3d
+```
 
 Ansonsten funktioniert auch jede andere Anaconda Installation basierend auf Python 3.8, die die Abhängigkeiten in `env/environment.yml` enthält.
 
