@@ -37,13 +37,13 @@
           <li class="{% if 'notifications' in segment %} active {% endif %}">
             <a href="/ui-notifications.html">
               <i class="tim-icons icon-bell-55"></i>
-              <p>Notifications</p>
+              <p>Benachrichtigungen</p>
             </a>
           </li>
           <li class="{% if 'page-user' in segment %} active {% endif %}">
             <a href="/page-user.html">
               <i class="tim-icons icon-single-02"></i>
-              <p>User Profile</p>
+              <p>Nutzerprofil</p>
             </a>
           </li>
           <li class="{% if 'tables' in segment %} active {% endif %}">
@@ -67,18 +67,9 @@
           <li>
             <a href="{% url 'logout' %}" >
               <i class="tim-icons icon-button-power"></i>
-              <p>Logout</p>
+              <p>Ausloggen</p>
             </a>
           </li>
-          {% else %}
-          <li class="active">
-            <a target="_blank" 
-               href="https://appseed.us/admin-dashboards/django-dashboard-black-pro">
-              <i class="tim-icons icon-spaceship"></i>
-              <p>PRO Version</p>
-            </a>
-          </li>   
-          {% endif %}
                     
         </ul>
         
