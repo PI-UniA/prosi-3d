@@ -1,0 +1,96 @@
+# Insurance in case a gem needed by one of our releases gets yanked from
+# rubygems.org in the future.
+cache gems:
+  extends:
+    - .default-retry
+    - .rails-cache
+    - .default-before_script
+    - .setup:rules:cache-gems
+  stage: test
+  needs: ["setup-test-env"]
+  variables:
+    BUNDLE_INSTALL_FLAGS: --with=production --with=development --with=test --jobs=2 --path=vendor --retry=3 --quiet
+    SETUP_DB: "false"
+  script:
+    - bundle package --all --all-platforms
+  artifacts:
+    paths:
+      - vendor/cache
+    expire_in: 31d
+
+.minimal-job:
+  extends:
+    - .default-retry
+  needs: []
+
+dont-interrupt-me:
+  extends: .setup:rules:dont-interrupt-me
+  stage: sync
+  image: alpine:edge
+  interruptible: false
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - echo "This jobs makes sure this pipeline won't be interrupted! See https://docs.gitlab.com/ee/ci/yaml/#interruptible."
+
+gitlab_git_test:
+  extends:
+    - .minimal-job
+    - .setup:rules:gitlab_git_test
+  stage: test
+  script:
+    - spec/support/prepare-gitlab-git-test-for-commit --check-for-changes
+
+no_ee_check:
+  extends:
+    - .minimal-job
+    - .setup:rules:no_ee_check
+  stage: test
+  script:
+    - scripts/no-ee-check
+
+verify-tests-yml:
+  extends:
+    - .setup:rules:verify-tests-yml
+  image: ruby:2.7-alpine
+  stage: test
+  needs: []
+  script:
+    - source scripts/utils.sh
+    - install_tff_gem
+    - scripts/verify-tff-mapping
+
+.detect-test-base:
+  image: ruby:2.7
+  needs: []
+  stage: prepare
+  script:
+    - source ./scripts/utils.sh
+    - source ./scripts/rspec_helpers.sh
+    - install_gitlab_gem
+    - install_tff_gem
+    - retrieve_tests_mapping
+    - 'if [ -n "$CI_MERGE_REQUEST_IID" ]; then tooling/bin/find_tests ${MATCHED_TESTS_FILE}; fi'
+    - 'if [ -n "$CI_MERGE_REQUEST_IID" ]; then echo "test files affected: $(cat $MATCHED_TESTS_FILE)"; fi'
+  artifacts:
+    expire_in: 7d
+    paths:
+      - ${MATCHED_TESTS_FILE}
+
+detect-tests:
+  extends:
+    - .detect-test-base
+    - .rails:rules:detect-tests
+  variables:
+    RSPEC_TESTS_MAPPING_ENABLED: "true"
+    MATCHED_TESTS_FILE: tmp/matching_tests.txt
+
+detect-tests as-if-foss:
+  extends:
+    - .detect-test-base
+    - .rails:rules:detect-tests
+    - .as-if-foss
+  variables:
+    MATCHED_TESTS_FILE: tmp/matching_foss_tests.txt
+  before_script:
+    - '[ "$FOSS_ONLY" = "1" ] && rm -rf ee/ qa/spec/ee/ qa/qa/specs/features/ee/ qa/qa/ee/ qa/qa/ee.rb'

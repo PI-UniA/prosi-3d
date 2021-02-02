@@ -1,0 +1,22 @@
+pages:
+  extends:
+    - .default-retry
+    - .pages:rules
+  stage: pages
+  dependencies:
+    - rspec:coverage
+    - coverage-frontend
+    - karma
+    - compile-production-assets
+  script:
+    - mv public/ .public/
+    - mkdir public/
+    - mv coverage/ public/coverage-ruby/ || true
+    - mv coverage-frontend/ public/coverage-frontend/ || true
+    - mv coverage-javascript/ public/coverage-javascript/ || true
+    - cp .public/assets/application-*.css public/application.css || true
+    - cp .public/assets/application-*.css.gz public/application.css.gz || true
+  artifacts:
+    paths:
+      - public
+    expire_in: 31d

@@ -1,0 +1,10 @@
+cloud-native-image:
+  extends: .cng:rules
+  image: ruby:2.7-alpine
+  dependencies: []
+  stage: post-test
+  variables:
+    GIT_DEPTH: "1"
+  script:
+    - install_gitlab_gem
+    - CNG_PROJECT_PATH="gitlab-org/build/CNG" BUILD_TRIGGER_TOKEN=$CI_JOB_TOKEN ./scripts/trigger-build cng

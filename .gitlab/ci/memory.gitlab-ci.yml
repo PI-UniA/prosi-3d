@@ -1,0 +1,57 @@
+.only-code-memory-job-base:
+  extends:
+    - .default-retry
+    - .rails-cache
+    - .default-before_script
+    - .memory:rules
+
+memory-static:
+  extends: .only-code-memory-job-base
+  stage: test
+  needs: ["setup-test-env"]
+  variables:
+    SETUP_DB: "false"
+  script:
+    # Uses two different reports from the 'derailed_benchmars' gem.
+
+    # Loads each of gems in the Gemfile and checks how much memory they consume when they are required.
+    # 'derailed_benchmarks' internally uses 'get_process_mem'
+    - bundle exec derailed bundle:mem > tmp/memory_bundle_mem.txt
+    - scripts/generate-gems-size-metrics-static tmp/memory_bundle_mem.txt >> 'tmp/memory_metrics.txt'
+
+    # Outputs detailed information about objects created while gems are loaded.
+    # 'derailed_benchmarks' internally uses 'memory_profiler'
+    - bundle exec derailed bundle:objects > tmp/memory_bundle_objects.txt
+    - scripts/generate-gems-memory-metrics-static tmp/memory_bundle_objects.txt >> 'tmp/memory_metrics.txt'
+  artifacts:
+    paths:
+      - tmp/memory_*.txt
+    reports:
+      metrics: tmp/memory_metrics.txt
+    expire_in: 31d
+
+# Show memory usage caused by invoking require per gem.
+# Unlike `memory-static`, it hits the app with one request to ensure that any last minute require-s have been called.
+# The application is booted in `production` environment.
+# All tests are run without a webserver (directly using Rack::Mock by default).
+memory-on-boot:
+  extends:
+    - .only-code-memory-job-base
+    - .use-pg11
+  stage: test
+  needs: ["setup-test-env", "compile-test-assets"]
+  variables:
+    NODE_ENV: "production"
+    RAILS_ENV: "production"
+    SETUP_DB: "true"
+    # we override the max_old_space_size to prevent OOM errors
+    NODE_OPTIONS: --max_old_space_size=3584
+  script:
+    - PATH_TO_HIT="/users/sign_in" CUT_OFF=0.3 bundle exec derailed exec perf:mem >> 'tmp/memory_on_boot.txt'
+    - scripts/generate-memory-metrics-on-boot tmp/memory_on_boot.txt >> 'tmp/memory_on_boot_metrics.txt'
+  artifacts:
+    paths:
+      - tmp/memory_*.txt
+    reports:
+      metrics: tmp/memory_on_boot_metrics.txt
+    expire_in: 31d

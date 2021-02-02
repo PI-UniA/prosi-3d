@@ -1,0 +1,70 @@
+.qa-job-base:
+  extends:
+    - .default-retry
+    - .qa-cache
+  stage: test
+  needs: []
+  before_script:
+    - '[ "$FOSS_ONLY" = "1" ] && rm -rf ee/ qa/spec/ee/ qa/qa/specs/features/ee/ qa/qa/ee/ qa/qa/ee.rb'
+    - cd qa/
+    - bundle install --clean --jobs=$(nproc) --path=vendor --retry=3 --without=development --quiet
+    - bundle check
+
+qa:internal:
+  extends:
+    - .qa-job-base
+    - .qa:rules:ee-and-foss
+  script:
+    - bundle exec rspec
+
+qa:internal-as-if-foss:
+  extends:
+    - qa:internal
+    - .qa:rules:as-if-foss
+    - .as-if-foss
+
+qa:selectors:
+  extends:
+    - .qa-job-base
+    - .qa:rules:ee-and-foss
+  script:
+    - bundle exec bin/qa Test::Sanity::Selectors
+
+qa:selectors-as-if-foss:
+  extends:
+    - qa:selectors
+    - .qa:rules:as-if-foss
+    - .as-if-foss
+
+update-qa-cache:
+  extends:
+    - .qa-job-base
+    - .shared:rules:update-cache
+  stage: prepare
+  script:
+    - echo "Cache has been updated and ready to be uploaded."
+  cache:
+    policy: push  # We want to rebuild the cache from scratch to ensure stale dependencies are cleaned up.
+
+.package-and-qa-base:
+  image: ruby:2.7-alpine
+  stage: qa
+  retry: 0
+  script:
+    - source scripts/utils.sh
+    - install_gitlab_gem
+    - ./scripts/trigger-build omnibus
+
+package-and-qa:
+  extends:
+    - .package-and-qa-base
+    - .qa:rules:package-and-qa
+  # This job often times out, so temporarily use private runners and a long timeout: https://gitlab.com/gitlab-org/gitlab/-/issues/238563
+  tags:
+    - prm
+  timeout: 4h
+  needs:
+    - job: build-qa-image
+      artifacts: false
+    - job: build-assets-image
+      artifacts: false
