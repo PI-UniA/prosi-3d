@@ -13,6 +13,6 @@ class Classifier(DataModel):
     
     """ Output the distribution of the input data over the specified classes """
     @abstractmethod
-    def class_distribution(self):
+    def _class_distribution(self):
         pass
     

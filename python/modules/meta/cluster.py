@@ -13,6 +13,6 @@ class Cluster(DataModel):
     
     """ Output the number of identified clusters for the specified input data """
     @abstractmethod
-    def num_clusters(self):
+    def _num_clusters(self):
         pass
     

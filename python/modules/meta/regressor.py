@@ -13,6 +13,6 @@ class Regressor(DataModel):
     
     """ Output the regression coefficient for the specified input data """
     @abstractmethod
-    def coefficient(self):
+    def _coefficient(self):
         pass
     

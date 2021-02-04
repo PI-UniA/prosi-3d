@@ -6,7 +6,7 @@ class DataModel(ABC):
     Top-level (abstract) methods that have to be inherited and re-defined by the sub-classes
     """
     @abstractmethod
-    def get_data(self):
+    def get_features(self):
         pass
 
     @abstractmethod
