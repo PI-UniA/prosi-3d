@@ -2,7 +2,7 @@
 
 ## Python
 
-Im Allgemeinen sollten die Richtlinien des [https://www.python.org/dev/peps/](Python Enhancement Proposals (PEP)) eingehalten werden. Insbesondere sind die Richtlinien in [https://www.python.org/dev/peps/pep-0008/](PEP8) relevant.
+Im Allgemeinen sollten die Richtlinien des [Python Enhancement Proposals (PEP)](https://www.python.org/dev/peps/) eingehalten werden. Insbesondere sind die Richtlinien in [PEP8](https://www.python.org/dev/peps/pep-0008/) relevant.
 
 Zusätzlich ist das Python Modul ```autopep8``` in das Docker-Image eingebunden, das Code versucht, automatisch nach PEP8 Standard zu formatieren. Das funktioniert allerdings nicht immer, daher sollte von Vornherein auf Konformität geachtet werden. Zusätzlich kann es hilfreich sein, ein entsprechendes Plugin für den eigenen Editor zu installieren. Diese sind bspw. für Atom und VS Code verfügbar.
 
