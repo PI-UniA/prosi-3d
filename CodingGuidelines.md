@@ -6,6 +6,29 @@ Im Allgemeinen sollten die Richtlinien des [Python Enhancement Proposals (PEP)](
 
 Zusätzlich ist das Python Modul ```autopep8``` in das Docker-Image eingebunden, das Code versucht, automatisch nach PEP8 Standard zu formatieren. Das funktioniert allerdings nicht immer, daher sollte von Vornherein auf Konformität geachtet werden. Zusätzlich kann es hilfreich sein, ein entsprechendes Plugin für den eigenen Editor zu installieren. Diese sind bspw. für Atom und VS Code verfügbar.
 
+Die Algorithmen zur Datenverarbeitung sind hierarchisch in Klassen organisiert. Dabei existieren Basisklassen ([Abstract Base Classes / ABC](https://docs.python.org/3/library/abc.html)), die die Grundoperationen über virtuelle Methoden spezifizieren. Diese Methoden müssen beim Erben dieser Klassen neu und applikationsspezifisch definiert werden, sonst wird ein Fehler ausgegeben.
+Dadurch wird vermieden, dass die implementierten Algorithmen unterschiedliche Syntax haben und das Aufrufen der Methoden nicht einheitlich ist.
+
+Ein Beispiel für die Klassenstruktur wäre:
+
+```
+.
+└── Data Model (ABC)
+   ├── Classifier (ABC)
+   │     ├── kNN
+   │     ├── CNN
+   │     └── Naive Bayes
+   ├── Cluster (ABC)
+   │     ├── k-Means
+   │     ├── MeanShift
+   │     └── Spectral Cluster
+   └── Regressor (ABC)
+```
+
+Bei der Definition eines k-Nearest-Neighbor Algorithmuss müssen also in diesem Beispiel sowohl die Methoden in der Elternklasse ```Classifier``` als auch in ```Data Model``` definiert sein. Weitere, anwendungsspezifische Methoden können jederzeit ergänzt werden.
+
+Beim Erstellen neuer Klassen muss die jeweilige Basisklasse am Anfang via ```from ... import ...``` Statement mit dem absoluten Pfad eingebunden werden.
+
 ## Dokumentation
 
 Die Dokumentation für dieses Projekt wird mithilfe von Sphinx generiert. Im Zuge dessen beinhaltet das Docker Image das entsprechende Python-Package ```sphinx```. 
