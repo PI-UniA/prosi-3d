@@ -5,3 +5,5 @@ channels:
 dependencies:
   - keras
   - h5py
+  - sphinx
+  - autopep8
