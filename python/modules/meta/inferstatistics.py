@@ -1,9 +1,9 @@
 from abc import ABC, ABCMeta, abstractmethod
 from analysis import DataModel
 """
-Abstract Base Class for data models that conduct regression upon the input data
+Abstract Base Class for data models that conducts inferential statistics on the input data
 """
-class Regressor(DataModel):
+class Predictor(DataModel):
 
     """
     Keep in mind that you have to define the abstract methods inherited from DataModel
@@ -11,7 +11,7 @@ class Regressor(DataModel):
 
     """ Custom, specific methods for classifier-type models """
 
-    """ Output the regression coefficient for the specified input data """
+    """ Output the correlation coefficients for the specified input data """
     @abstractmethod
-    def _coefficient(self):
+    def _correlation(self):
         pass
