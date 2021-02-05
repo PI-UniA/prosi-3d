@@ -9,7 +9,7 @@ Im Hauptverzeichnis befindet sich das `Dockerfile`, das die Konfiguration des Co
 Um den Container (einmalig) lokal zu erstellen, muss folgender Befehl im Hauptverzeichnis dieses Repositories in einem Terminal (Linux / OS X) oder der PowerShell ausgeführt werden:
 
 ```bash
-docker build .
+docker build . -t prosi3d:latest
 ```
 
 Danach kann der Container jederzeit mit einem interaktiven Terminal gestartet werden:
