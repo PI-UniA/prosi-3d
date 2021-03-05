@@ -1,5 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
-from preprocessor import Preprocessor
+from .preprocessor import Preprocessor
 """
 Abstract Base Class for preprocessors that outputs features of the raw data that are required for machine learning models
 """

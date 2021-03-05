@@ -1,5 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
-from analysis import DataModel
+from .analysis import DataModel
 """
 Abstract Base Class for data models that conduct classification upon the input data
 """
