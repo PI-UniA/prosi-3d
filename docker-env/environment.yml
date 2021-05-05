@@ -1,4 +1,4 @@
-name: root
+name: prosi3d
 channels:
   - defaults
   - conda-forge
