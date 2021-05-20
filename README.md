@@ -15,8 +15,9 @@ docker build . -t prosi3d:latest
 Danach kann der Container jederzeit mit einem interaktiven Terminal gestartet werden:
 
 ```bash
-docker run -ti prosi3d
+docker run --rm -ti prosi3d
 ```
+Für die Entwicklungsumgebung [VS Code](https://code.visualstudio.com) steht auch eine auf Docker basierende Entwicklungsumgebung als Remote Container zur Verfügung.
 
 Ansonsten funktioniert auch jede andere Anaconda Installation basierend auf Python 3.8, die die Abhängigkeiten in `env/environment.yml` enthält.
 
