@@ -8,3 +8,4 @@ dependencies:
   - sphinx
   - autopep8
   - pytest
+  - tox

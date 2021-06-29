@@ -2,15 +2,11 @@
 prosi3d
 =======
 
+Dieses Repository beinhaltet den im Forschungsprojekt erarbeiteten Code sowie die Konfigurationsdateien, um diesen in einem Docker Container laufen zu lassen. Dies dient dazu, um die Paketabhängigkeiten für jede Plattform aufzulösen und auf dem Client keine Konflikte mit bestehenden Python-Installationen zu erzeugen.
 
-Add a short description here!
+Im Hauptverzeichnis befindet sich das Dockerfile, das die Konfiguration des Containers beschreibt. Die Basis ist eine Anaconda Installation mit Python 3. Die Abhängigkeiten sind in env/environment.yml zu finden. Sind weitere gewünscht, können diese hier einfach ergänzt werden.
 
-
-Description
-===========
-
-A longer description of your project goes here...
-
+Um den Container (einmalig) lokal zu erstellen, muss folgender Befehl im Hauptverzeichnis dieses Repositories in einem Terminal (Linux / OS X) oder der PowerShell ausgeführt werden:
 
 .. _pyscaffold-notes:
 
