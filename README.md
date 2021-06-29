@@ -9,14 +9,15 @@ Im Hauptverzeichnis befindet sich das `Dockerfile`, das die Konfiguration des Co
 Um den Container (einmalig) lokal zu erstellen, muss folgender Befehl im Hauptverzeichnis dieses Repositories in einem Terminal (Linux / OS X) oder der PowerShell ausgeführt werden:
 
 ```bash
-docker build .
+docker build . -t prosi3d:latest
 ```
 
 Danach kann der Container jederzeit mit einem interaktiven Terminal gestartet werden:
 
 ```bash
-docker run -ti prosi3d
+docker run --rm -ti prosi3d
 ```
+Für die Entwicklungsumgebung [VS Code](https://code.visualstudio.com) steht auch eine auf Docker basierende Entwicklungsumgebung als Remote Container zur Verfügung.
 
 Ansonsten funktioniert auch jede andere Anaconda Installation basierend auf Python 3.8, die die Abhängigkeiten in `env/environment.yml` enthält.
 

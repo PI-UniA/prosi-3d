@@ -1,7 +1,9 @@
-name: root
+name: prosi3d
 channels:
   - defaults
   - conda-forge
 dependencies:
   - keras
   - h5py
+  - sphinx
+  - autopep8
