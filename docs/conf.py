@@ -37,7 +37,7 @@ except ImportError:
     from sphinx import apidoc
 
 output_dir = os.path.join(__location__, "api")
-module_dir = os.path.join(__location__, "../src/my_project")
+module_dir = os.path.join(__location__, "../src/prosi3d")
 try:
     shutil.rmtree(output_dir)
 except FileNotFoundError:
@@ -93,7 +93,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "my_project"
+project = "prosi3d"
 copyright = "2021, Patrick Zimbrod"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -163,7 +163,7 @@ html_theme_options = {
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 try:
-    from my_project import __version__ as version
+    from prosi3d import __version__ as version
 except ImportError:
     pass
 else:
@@ -228,7 +228,7 @@ html_static_path = ["_static"]
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "my_project-doc"
+htmlhelp_basename = "prosi3d-doc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -245,7 +245,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "user_guide.tex", "my_project Documentation", "Patrick Zimbrod", "manual")
+    ("index", "user_guide.tex", "prosi3d Documentation", "Patrick Zimbrod", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

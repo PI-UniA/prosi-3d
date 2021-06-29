@@ -1,8 +1,8 @@
-==========
-my_project
-==========
+=======
+prosi3d
+=======
 
-This is the documentation of **my_project**.
+This is the documentation of **prosi3d**.
 
 .. note::
 

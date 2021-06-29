@@ -1,8 +1,0 @@
-##### Requirements for the prosi3d Python package #####
-scikit-learn
-pandas
-numpy
-scipy
-matplotlib
-keras
-h5py

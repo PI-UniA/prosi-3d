@@ -1,6 +1,6 @@
 import pytest
 
-from my_project.skeleton import fib, main
+from prosi3d.skeleton import fib, main
 
 __author__ = "Patrick Zimbrod"
 __copyright__ = "Patrick Zimbrod"
