@@ -1,5 +1,8 @@
 import numpy as np
+import h5py as h5
+import sys
 from scipy.fft import rfft, fftfreq
+
 
 class MethodsCollections():
 
@@ -8,12 +11,12 @@ class MethodsCollections():
     """   
 
     """ method for all sensors to read the hdf5 file """
-    def _read_measurements_C(hdf, sensorwert):
+    def _read_measurements_C(hdf_name, sensorwert):
         
         try:
             ###Abfragen, ob in welcher Spalte accousticair Werte stehen
             ###aktuelle Annahme: Immer gleiche Spalte (--> Parameter)
-
+            hdf = h5.File(hdf_name, 'r')
             """ Extract Measurements for the y-axis """
             measurements = np.array(hdf.get('df')['block0_values'][0:10000, sensorwert]) ##Achtung: nicht alle Werte, um besser testen zu können!
             sample_number = measurements.shape[0]
@@ -26,8 +29,12 @@ class MethodsCollections():
 
             return time, measurements
         
+        except IOError:
+            raise Exception("The file can not be found!")
+
         except:
-            print("Fehler beim Einlesen der hdf5 Datei. Bitte überprüfen.")
+            raise Exception("Fehler in der Methode _read_measurements_C der Klasse MethodsCollection. Fehlerklasse: ", sys.exc_info()[0])
+    
 
 
     """ method for all sensors to replace the nan values with the mean of the neighboring values """
@@ -54,7 +61,7 @@ class MethodsCollections():
             return series
 
         except:
-            print("Fehler beim Ersetzen der NAN-Werte.")
+            raise Exception("Fehler in der Methode _replace_nan_C in der Klasse MethodsCollection. Fehlertyp: ", sys.exc_info()[0])
 
 
     """ method for all sensors to shift the x-axis to the mean """
@@ -86,7 +93,7 @@ class MethodsCollections():
             return xf, yf
 
         except:
-            print("Fehler bei der Fourier-Transformation.")
+            raise Exception("Fehler in der Methode _create_FFT_C in der Klasse MethodsCollection. Fehlertyp: ", sys.exc_info()[0])
 
 
     

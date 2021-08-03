@@ -1,9 +1,10 @@
-from prosi3d.meta.featureExtractor import FeatureExtractor
-from prosi3d.sensors.methods_collection import MethodsCollections
 import numpy as np
 import matplotlib.pyplot as plt
-
 from scipy.signal import find_peaks
+import sys
+
+from prosi3d.meta.featureExtractor import FeatureExtractor
+from prosi3d.sensors.methods_collection import MethodsCollections
 
 """ Subclass from Abstract Base Class featureExtractor that outputs features of the raw data that are required for machine learning models """
 class Accousticair(FeatureExtractor):
@@ -79,7 +80,8 @@ class Accousticair(FeatureExtractor):
             
             return peaks
         except:
-            print("Fehler beim Suchen der Peaks.")
+            raise Exception ("Fehler in der Methode _find_peaks_values() in Klasse Accousticair. Fehlertyp: ", sys.exc_info()[0])
+
 
 
 
@@ -87,27 +89,30 @@ class Accousticair(FeatureExtractor):
     """ method to plot the diagramms and the peaks """
     ###Nur derzeitig zum Testen enthalten (kann später entfernt werden)
     def plot_test(self):
+        try:
+            fig, ax = plt.subplots(2)
 
-        fig, ax = plt.subplots(2)
-        print(self.yt)
-        """ plot time Domain """
-        ax[0].plot(self.xt, self.yt, linewidth=0.1)
-        ax[0].set_title('Zeitbereich')
-        ax[0].set_xlabel('Zeit in [ms]')
-        ax[0].set_ylabel('Sensormesswert')
+            """ plot time Domain """
+            ax[0].plot(self.xt, self.yt, linewidth=0.1)
+            ax[0].set_title('Zeitbereich')
+            ax[0].set_xlabel('Zeit in [ms]')
+            ax[0].set_ylabel('Sensormesswert')
 
-        """plot frequency domain"""
-        ax[1].scatter(self.xf, self.yf, s=2)
-        ax[1].set_title(f'Frequenzbereich')
-        ax[1].set_xlabel('Frequenz in [Hz]')
-        ax[1].set_ylabel('Spektale Leistungsdichte')
-        plt.ylim(-0.0000005, 0.000005)
+            """plot frequency domain"""
+            ax[1].scatter(self.xf, self.yf, s=2)
+            ax[1].set_title(f'Frequenzbereich')
+            ax[1].set_xlabel('Frequenz in [Hz]')
+            ax[1].set_ylabel('Spektale Leistungsdichte')
+            plt.ylim(-0.0000005, 0.000005)
 
-        """plot peaks"""
-        ax[1].scatter(self.peaks_x, self.peaks_y, marker="x")
+            """plot peaks"""
+            ax[1].scatter(self.peaks_x, self.peaks_y, marker="x")
 
-        fig.tight_layout()
-        plt.show ()
+            fig.tight_layout()
+            plt.show ()
+        
+        except:
+            raise Exception("Fehler in der Methode plot_test der Klasse Accousticair. Fehlertyp: ", sys.exc_info()[0])
     
 
 
