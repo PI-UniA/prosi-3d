@@ -86,8 +86,7 @@ class MethodsCollections():
             return series
 
         except:
-            pass
-            #raise Exception("Fehler in der Methode _replace_nan_C in der Klasse MethodsCollection. Fehlertyp: ", sys.exc_info()[0])
+            raise Exception("Fehler in der Methode _replace_nan_C in der Klasse MethodsCollection. Fehlertyp: ", sys.exc_info()[0])
 
 
     """ method for all sensors to shift the x-axis to the mean """
