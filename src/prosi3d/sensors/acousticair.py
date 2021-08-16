@@ -75,7 +75,7 @@ class Accousticair(FeatureExtractor):
             distance = None
             prominence = None
 
-            #return value: index of the peaks
+            """return value: indices of the peaks"""
             peaks = find_peaks(self.yf, height, distance, prominence)
             
             return peaks
@@ -103,11 +103,12 @@ class Accousticair(FeatureExtractor):
             ax[1].set_title(f'Frequenzbereich')
             ax[1].set_xlabel('Frequenz in [Hz]')
             ax[1].set_ylabel('Spektale Leistungsdichte')
-            plt.ylim(-0.0000005, 0.000005)
+            plt.ylim(-0.0000005, 0.000005) ###Achtung: Wurde angepasst
 
             """plot peaks"""
             ax[1].scatter(self.peaks_x, self.peaks_y, marker="x")
 
+            fig.suptitle("Accousticair")
             fig.tight_layout()
             plt.show ()
         

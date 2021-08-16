@@ -75,7 +75,7 @@ class Accousticplatform(FeatureExtractor):
             distance = None
             prominence = None
 
-            #return value: index of the peaks
+            """return value: index of the peaks"""
             peaks = find_peaks(self.yf, height, distance, prominence)
             
             return peaks
@@ -92,6 +92,7 @@ class Accousticplatform(FeatureExtractor):
     def plot_test(self):
         try:
             fig, ax = plt.subplots(2)
+            
         
             """ plot time Domain """
             ax[0].plot(self.xt, self.yt, linewidth=0.1)
@@ -104,11 +105,12 @@ class Accousticplatform(FeatureExtractor):
             ax[1].set_title(f'Frequenzbereich')
             ax[1].set_xlabel('Frequenz in [Hz]')
             ax[1].set_ylabel('Spektale Leistungsdichte')
-            plt.ylim(-0.0000005, 0.000005)
+            plt.ylim(-0.0000005, 0.000005) ###Achtung: Wurde angepasst
 
             """plot peaks"""
             ax[1].scatter(self.peaks_x, self.peaks_y, marker="x")
 
+            fig.suptitle("Accousticplatform")
             fig.tight_layout()
             plt.show ()
         
