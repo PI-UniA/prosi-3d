@@ -4,7 +4,7 @@ import sys
 from scipy.signal import find_peaks
 
 from prosi3d.meta.featureExtractor import FeatureExtractor
-from prosi3d.sensors.methods_collection import MethodsCollections
+from prosi3d.sensors.methodsCollection import MethodsCollections
 
 """ Subclass from Abstract Base Class featureExtractor that outputs features of the raw data that are required for machine learning models """
 class Recoater(FeatureExtractor):
