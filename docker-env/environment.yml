@@ -9,3 +9,6 @@ dependencies:
   - autopep8
   - pytest
   - tox
+  - setuptools
+  - setuptools_scm
+  - wheel
