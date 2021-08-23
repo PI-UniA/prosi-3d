@@ -50,7 +50,6 @@ class MethodsCollections():
 
             for i in range(0, nan_yt.size):
                 index = nan_yt[i][0]
-                print ("Index", index)
                 
                 """ continue if the previous value was nan, too"""
                 if (index - 1 == nan_yt[i - 1]):
