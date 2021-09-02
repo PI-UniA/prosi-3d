@@ -1,18 +1,17 @@
+"""
+This class contains a collection of methods which are the same for all sensors. All methods are private.
+"""
+
 import numpy as np
 import h5py as h5
 import sys
 from scipy.fft import rfft, fftfreq
 
-
 class MethodsCollections():
-
-    """
-    This class contains a collection of methods which are the same for all sensors. All methods are private.
-    """   
-
-    """ method for all sensors to read the hdf5 file """
+      
     def _read_measurements_C(hdf_name, sensorwert):
-        
+        """method for all sensors to read the hdf5 file
+        """
         try:
             ###Abfragen, ob in welcher Spalte accousticair Werte stehen
             ###aktuelle Annahme: Immer gleiche Spalte (--> Parameter)
@@ -35,12 +34,11 @@ class MethodsCollections():
 
         except:
             raise Exception("Fehler in der Methode _read_measurements_C der Klasse MethodsCollection. Fehlerklasse: ", sys.exc_info()[0])
-    
 
-
-    """ method for all sensors to replace the nan values with the mean of the neighboring values """
     def _replace_nan_C(series): 
 
+        """method for all sensors to replace the nan values with the mean of the neighboring values
+        """
         try:
             #series [6000] = np.nan
             #series [6001] = np.nan
@@ -88,15 +86,17 @@ class MethodsCollections():
             raise Exception("Fehler in der Methode _replace_nan_C in der Klasse MethodsCollection. Fehlertyp: ", sys.exc_info()[0])
 
 
-    """ method for all sensors to shift the x-axis to the mean """
     def _move_to_mean(series):
+        """method for all sensors to shift the x-axis to the mean
+        """
         data_mean = np.mean(series)
         series = series - data_mean
         return series
 
 
-    """ method for all sensors to create the rFFT """
     def _create_FFT_C(y):
+        """method for all sensors to create the rFFT
+        """
         
         """ Source: https://docs.scipy.org/doc/scipy/reference/tutorial/fft.html """
         try:

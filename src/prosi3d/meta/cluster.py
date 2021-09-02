@@ -1,8 +1,9 @@
-from abc import ABC, ABCMeta, abstractmethod
-from .analysis import DataModel
 """
 Abstract Base Class for data models that conduct clustering upon the input data
 """
+
+from abc import ABC, ABCMeta, abstractmethod
+from .analysis import DataModel
 class Cluster(DataModel):
 
     """

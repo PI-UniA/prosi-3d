@@ -33,7 +33,7 @@ Contents
    License <license>
    Authors <authors>
    Changelog <changelog>
-   Module Reference <modules>
+   Module Reference <api/modules>
 
 
 Indices and tables

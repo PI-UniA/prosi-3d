@@ -1,8 +1,9 @@
-from abc import ABC, ABCMeta, abstractmethod
-from .preprocessor import Preprocessor
 """
 Abstract Base Class for preprocessors that slice and group the raw data
 """
+
+from abc import ABC, ABCMeta, abstractmethod
+from .preprocessor import Preprocessor
 class Slicer(Preprocessor):
 
     """
