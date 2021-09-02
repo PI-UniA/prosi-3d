@@ -33,11 +33,22 @@ $ sudo docker-compose pull && sudo docker-compose build && sudo docker-compose u
 
 Alternativ kann auch eine lokale Installation wie in der [README-Datei](dashboard/README.md) beschrieben durchgeführt werden. Danach läuft der Service im Hintergrund und der Zugriff über den Browser ist möglich.
 
-## ToDo
+## Builds und Hinweise für Developer
 
-- [x] Virtual Environment
-- [ ] Python-Grundstruktur
-- [ ] Datenvorverarbeitung
-- [ ] Statistische Auswertung
-- [ ] Machine Learning Auswertung
-- [ ] User Frontend
+Das Package arbeitet mit `tox`. Damit lassen sich Builds einfach automatisch erzeugen, Tests automatisiert durchführen und die Dokumentation generieren lassen.
+Die jeweiligen Pipelines sind in der Datei `tox.ini` definiert. Um beispielsweise den dort definierten Workflow zur Erstellung der Dokumentation auszuführen, muss folgendes in ein Terminal eingegeben werden:
+
+```bash
+tox -e docs
+```
+
+Die generierten HTML-Dateien sind dann im Ordner `docs/_build/html` zu finden.
+
+Um mit den Dateien ad hoc zu arbeiten, sollte mithilfe von `setuptools` eine Dev-Version des Pakets erstellt werden.
+Das geht, indem man in einem Terminal im Hauptverzeichnis die Setup-Datei aufruft:
+
+```bash
+python setup.py develop
+```
+
+Das Paket verhält sich dann wie ein normal installiertes. Es können also alle Klassen, Methoden und Objekte durch Import des Pakets `prosi3d` geladen werden
