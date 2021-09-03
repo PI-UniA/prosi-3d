@@ -52,12 +52,3 @@ python setup.py develop
 ```
 
 Das Paket verhält sich dann wie ein normal installiertes. Es können also alle Klassen, Methoden und Objekte durch Import des Pakets `prosi3d` geladen werden
-
-## ToDo
-
-- [x] Virtual Environment
-- [x] Python-Grundstruktur
-- [ ] Datenvorverarbeitung
-- [ ] Statistische Auswertung
-- [ ] Machine Learning Auswertung
-- [ ] User Frontend

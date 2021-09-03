@@ -1,8 +1,9 @@
-from abc import ABC, ABCMeta, abstractmethod
-from prosi3d.meta.preprocessor import Preprocessor
 """
 Abstract Base Class for preprocessors that outputs features of the raw data that are required for machine learning models
 """
+
+from abc import ABC, ABCMeta, abstractmethod
+from prosi3d.meta.preprocessor import Preprocessor
 class FeatureExtractor(Preprocessor):
 
     """

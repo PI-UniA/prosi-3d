@@ -67,7 +67,11 @@ Falsch:
 
 Richtig:
 ```python
-    """ Neuer Algorithmus """
     class myClass:
+        """
+        Neuer Algorithmus
+        """
         pass
 ```
+
+Die genaue Platzierung und Formatierung ist im [Google Style Guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings) beschrieben. Diese Konvention muss eingehalten werden, damit die Dokumentation durch `Sphinx` automatisch generiert werden kann.

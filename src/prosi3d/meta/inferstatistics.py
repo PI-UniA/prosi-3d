@@ -1,8 +1,9 @@
-from abc import ABC, ABCMeta, abstractmethod
-from .analysis import DataModel
 """
 Abstract Base Class for data models that conducts inferential statistics on the input data
 """
+
+from abc import ABC, ABCMeta, abstractmethod
+from .analysis import DataModel
 class Predictor(DataModel):
 
     """
