@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import h5py as h5
 from scipy.signal import find_peaks
 import sys
 import math
@@ -122,7 +123,7 @@ class Accousticplatform(FeatureExtractor):
 
 
 
-        """ Calculate the varianz """
+    """ Calculate the varianz """
     def _var_time (y):
         return np.var(y)
 
@@ -142,18 +143,19 @@ class Accousticplatform(FeatureExtractor):
 
 
     """ Get the features as array """
-    def get_feature(self):
+    def get_feature(self, hdf_name):
         ### Ausgangslage: Bereitstellung der Sensordaten je Schicht in einer Datei; 
         ### Aufbau gleich wie bisher: Sensorwerte als Array (Spalte 0: Luftschall, 2: Körperschall Plattform, 3: Körperschall Beschichter)
-        ### Annahme: Array mit allen Arrays (Name: sources)
+        ### Aus gesamten Array muss Spalte zum entsprechenden Sensor herausgeschnitten werden
 
-        ### Extraktion, so dass in sources nur noch Sensorwerte des jeweiligen Sensors vorliegen, muss noch vorgenommen werden (hier jetzt als Annahme)
+        hdf = h5.File(hdf_name, 'r') 
+        sensorwert = 2
+        measurements = np.array(hdf.get('df')['block0_values'][:, sensorwert])
 
-        sources = np.array([source1, source2, source3, source4, source5, source6]) #Source_x : Anzahl Messungen des speziellen Sensors
-        features = np.zeros((sources.size, 3)) #Anzahl Schichten x Anzahl Features
+        features = np.zeros((measurements.size, 3)) #Anzahl Schichten x Anzahl Features
         i = 0
 
-        for s in sources:
+        for s in measurements:
             
             var = Accousticplatform._var_time (s)
             count_peaks_fre = Accousticplatform._peaks_over_boundary_fre(s)

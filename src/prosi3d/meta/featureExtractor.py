@@ -41,5 +41,5 @@ class FeatureExtractor(Preprocessor):
 
     """ Get the features as array """
     @abstractmethod
-    def get_feature(self):
+    def get_feature(self, hdf):
         pass
