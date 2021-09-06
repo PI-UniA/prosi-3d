@@ -137,15 +137,14 @@ class Accousticplatform(FeatureExtractor):
 
     """ Main component analyse """ 
     def _main_component_PCA (y):
-        ###Hier fehlt noch was, Erklärung von Patrick, was er im Anforderungskatalog gemeint hat, folgt
+        ###Implementierung der Methode fehlt noch
         pass
 
 
 
     """ Get the features as array """
     def get_feature(self, hdf_name):
-        ### Ausgangslage: Bereitstellung der Sensordaten je Schicht in einer Datei; 
-        ### Aufbau gleich wie bisher: Sensorwerte als Array (Spalte 0: Luftschall, 2: Körperschall Plattform, 3: Körperschall Beschichter)
+        ### Ausgangslage: Bereitstellung der Sensordaten je Schicht in einer Datei
         ### Aus gesamten Array muss Spalte zum entsprechenden Sensor herausgeschnitten werden
 
         hdf = h5.File(hdf_name, 'r')
@@ -153,17 +152,10 @@ class Accousticplatform(FeatureExtractor):
         sensorwert = 2
         measurements = np.array(hdf.get('df')['block0_values'][:, sensorwert])
 
-        features = np.zeros((measurements.size, 3)) #Anzahl Schichten x Anzahl Features
-        i = 0
+        var = Accousticplatform._var_time (measurements)
+        count_peaks_fre = Accousticplatform._peaks_over_boundary_fre(measurements)
+        count_peaks_time = Accousticplatform._main_component_PCA(measurements)
 
-        for s in measurements:
-            
-            var = Accousticplatform._var_time (s)
-            count_peaks_fre = Accousticplatform._peaks_over_boundary_fre(s)
-            count_peaks_time = Accousticplatform._main_component_PCA(s)
-
-            features[i] = [var, count_peaks_fre, count_peaks_time]
-
-            i = i + 1
+        features = [var, count_peaks_fre, count_peaks_time]
         
         return features
