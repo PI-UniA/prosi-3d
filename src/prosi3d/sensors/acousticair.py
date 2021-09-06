@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
 import sys
+import math
 
 from prosi3d.meta.featureExtractor import FeatureExtractor
 from prosi3d.sensors.methodsCollection import MethodsCollections
@@ -117,6 +118,48 @@ class Accousticair(FeatureExtractor):
 
 
 
+
+        """ Calculate the varianz """
+    def _var_time (y):
+        return np.var(y)
+
+    """ Find peaks over a boundary in frequency domain """
+    def _peaks_over_boundary_fre (yf):
+        ###Boundary Wert muss noch angepasst werden
+        x = 5
+        array = [math.log10(i) > x for i in yf]
+        return sum(array)
+
+
+    """ Main component analyse """ 
+    def _main_component_PCA (y):
+        ###Hier fehlt noch was, Erklärung von Patrick, was er im Anforderungskatalog gemeint hat, folgt
+        pass
+
+
+    """ Get the features as array """
+    def get_feature(self):
+        ### Ausgangslage: Bereitstellung der Sensordaten je Schicht in einer Datei; 
+        ### Aufbau gleich wie bisher: Sensorwerte als Array (Spalte 0: Luftschall, 2: Körperschall Plattform, 3: Körperschall Beschichter)
+        ### Annahme: Array mit allen Arrays (Name: sources)
+
+        ### Extraktion, so dass in sources nur noch Sensorwerte des jeweiligen Sensors vorliegen, muss noch vorgenommen werden (hier jetzt als Annahme)
+
+        sources = np.array([source1, source2, source3, source4, source5, source6]) #Source_x : Anzahl Messungen des speziellen Sensors
+        features = np.zeros((sources.size, 3)) #Anzahl Schichten x Anzahl Features
+        i = 0
+
+        for s in sources:
+            
+            var = Accousticair._var_time (s)
+            count_peaks_fre = Accousticair._peaks_over_boundary_fre(s)
+            count_main_component_PCA = Accousticair._main_component_PCA(s)
+
+            features[i] = [var, count_peaks_fre, count_main_component_PCA]
+
+            i = i + 1
+            
+        return features
 
 
 
