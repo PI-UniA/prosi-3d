@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 from scipy.signal import find_peaks
+import math
 
 from prosi3d.meta.featureExtractor import FeatureExtractor
 from prosi3d.sensors.methodsCollection import MethodsCollections
@@ -113,3 +114,49 @@ class Recoater(FeatureExtractor):
         
         except:
             raise Exception("Fehler in der Methode plot_test der Klasse Accousticplatform. Fehlertyp: ", sys.exc_info()[0])
+
+
+
+    """ Calculate the varianz """
+    def _var_time (y):
+        return np.var(y)
+
+    """ Find peaks over a boundary in frequency domain """
+    def _peaks_over_boundary_fre (yf):
+        ###Boundary Wert muss noch angepasst werden
+        x = 5
+        array = [math.log10(i) > x for i in yf]
+        return sum(array)
+    
+    """ Find peaks over a boundary in time domain """
+    def _peaks_over_boundary_time (y):
+        ###Boundary Wert muss noch angepasst werden
+        x = 5
+        array = [math.log10(i) > x for i in y]
+        return sum(array)
+
+
+
+    """ Get the features as array """
+    def get_feature(self):
+        ### Ausgangslage: Bereitstellung der Sensordaten je Schicht in einer Datei; 
+        ### Aufbau gleich wie bisher: Sensorwerte als Array (Spalte 0: Luftschall, 2: Körperschall Plattform, 3: Körperschall Beschichter)
+        ### Annahme: Array mit allen Arrays (Name: sources)
+
+        ### Extraktion, so dass in sources nur noch Sensorwerte des jeweiligen Sensors vorliegen, muss noch vorgenommen werden (hier jetzt als Annahme)
+
+        sources = np.array([source1, source2, source3, source4, source5, source6]) #Source_x : Anzahl Messungen des speziellen Sensors
+        features = np.zeros((sources.size, 3)) #Anzahl Schichten x Anzahl Features
+        i = 0
+
+        for s in sources:
+            
+            var = Recoater._var_time (s)
+            count_peaks_fre = Recoater._peaks_over_boundary_fre(s)
+            count_peaks_time = Recoater._peaks_over_boundary_time(s)
+
+            features[i] = [var, count_peaks_fre, count_peaks_time]
+
+            i = i + 1
+
+        return features
