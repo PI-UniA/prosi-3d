@@ -4,6 +4,7 @@ Subclass from Abstract Base Class featureExtractor that outputs features of the 
 
 import numpy as np
 import matplotlib.pyplot as plt
+import h5py as h5
 from scipy.signal import find_peaks
 import sys
 
@@ -115,14 +116,69 @@ class Accousticair(FeatureExtractor):
             raise Exception("Fehler in der Methode plot_test der Klasse Accousticair. Fehlertyp: ", sys.exc_info()[0])
     
 
-def assignment_position_measurements(self):
-    try: 
-        #mit Björns Methode erhält man Array (xtime, ytime, int (partId), int (exposure))
-        #Beispiel-Array: 
-        example = [[5,5,1,7], [5,10,1,7], [5,15,2,7]]
-    
-    except:
-        raise Exception("Fehler in der Methode assignment_position_measurements() der Klasse Accousticair. Fehlertyp: ", sys.exc_info()[0])
+    def assignment_position_measurements(self, hdf_name):
+        try: 
+        
+            #hdf TTL Signal einlesen
+            hdf = h5.File(hdf_name, 'r')
+            """ Extract Measurements for the y-axis """
+            ttl = np.array(hdf.get('df')['block0_values'][:, 1])
+           
+            #plt.plot(ttl, linewidth=0.1)
+            #plt.show()
+
+            # Zeit: startzeitpunkt + 50 Hz (= konstante Zeit zwischen zwei Sensorwerten = 0,02s)
+            time_between_measurements = 1/50000 #?
+
+            ###Startpunkt suchen: Einfachste Lösung TTL-Signal über bestimmten Wert, fraglich ob ausreichend? Anstieg des Mittelwerts?
+            
+            start_value = 473300
+            time = 0
+
+            #Beispiel-Array zum Testen: 
+            example = np.array([[5,5,1,7], [5,10,1,7], [5,15,2,7]])
+            i=0
+
+            #Startwerte setzen: time = 0 (i=0)
+            res_matrix = np.append(example[0], ttl[start_value])
+            #1D to 2D Array
+            res_matrix = np.reshape(res_matrix,(1, res_matrix.size))
+
+            #for value in range (start_value+1, ttl.shape[0]+1):
+            for value in range (start_value+1, start_value + example.shape[0]):
+                 
+                # mit Björns Methode: getXY_lin
+                # Input: Zeit, Layer
+                ### Layer aus hdf_name: 
+                ### Zeit bestimmen:
+                time = time + time_between_measurements
+                # Array (xtime, ytime, int (partId), int (exposure))
+
+                #Beispielwerte zum Testen:
+                i=i+1
+                laser_values = example[i]
+
+                measurement = ttl[value]
+
+                #Zusammenfügen (x,y,partId,exposure,measurement value) für Zeitwert time
+                new = np.append(laser_values, measurement)
+                
+                #In Array hinzufügen
+                res_matrix = np.append(res_matrix,[new],axis= 0)
+
+            print ("MATRIX", res_matrix)
+
+
+
+
+            # Ziel: (x,y, partId, exposure, sensorwert)
+            
+
+
+
+        
+        except:
+            raise Exception("Fehler in der Methode assignment_position_measurements() der Klasse Accousticair. Fehlertyp: ", sys.exc_info()[0])
 
 
 
