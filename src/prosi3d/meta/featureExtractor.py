@@ -38,3 +38,8 @@ class FeatureExtractor(Preprocessor):
     @abstractmethod
     def _find_peaks_values(self):
         pass
+    
+    """assignment position of the laser (x,y) to the measurements (time signal) """
+    @abstractmethod
+    def assignment_position_measurements(self):
+        pass
