@@ -112,4 +112,15 @@ class Recoater(FeatureExtractor):
             plt.show ()
         
         except:
-            raise Exception("Fehler in der Methode plot_test der Klasse Accousticplatform. Fehlertyp: ", sys.exc_info()[0])
+            raise Exception("Fehler in der Methode plot_test der Klasse Recoater. Fehlertyp: ", sys.exc_info()[0])
+
+
+    def assignment_position_measurements(self):
+        try: 
+            #mit Björns Methode erhält man Array (xtime, ytime, int (partId), int (exposure))
+            #Beispiel-Array: 
+            example = [[5,5,1,7], [5,10,1,7], [5,15,2,7]]
+    
+        except:
+            raise Exception("Fehler in der Methode assignment_position_measurements() der Klasse Recoater. Fehlertyp: ", sys.exc_info()[0])
+
