@@ -144,8 +144,9 @@ class Recoater(FeatureExtractor):
         ### Aufbau gleich wie bisher: Sensorwerte als Array (Spalte 0: Luftschall, 2: Körperschall Plattform, 3: Körperschall Beschichter)
         ### Aus gesamten Array muss Spalte zum entsprechenden Sensor herausgeschnitten werden
 
-        hdf = h5.File(hdf_name, 'r') 
-        sensorwert = 4
+        hdf = h5.File(hdf_name, 'r')
+        #accousticplatform in column 4 
+        sensorwert = 3
         measurements = np.array(hdf.get('df')['block0_values'][:, sensorwert])
 
         features = np.zeros((measurements.size, 3)) #Anzahl Schichten x Anzahl Features

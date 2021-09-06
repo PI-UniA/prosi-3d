@@ -145,6 +145,7 @@ class Accousticair(FeatureExtractor):
         ### Aus gesamten Array muss Spalte zum entsprechenden Sensor herausgeschnitten werden
 
         hdf = h5.File(hdf_name, 'r') 
+        #accousticplatform in column 1
         sensorwert = 0
         measurements = np.array(hdf.get('df')['block0_values'][:, sensorwert])
 
