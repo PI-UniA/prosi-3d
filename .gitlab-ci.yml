@@ -24,7 +24,7 @@ cache:
 # This is a basic example for a packages or script which doesn't use
 # services such as redis or postgres
 before_script:
-  - docker run -ti prosi3d:latest
+  - docker run prosi3d:latest
 
 build_image:
   script:
