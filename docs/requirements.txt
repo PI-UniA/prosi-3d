@@ -8,3 +8,4 @@ h5py
 numpy
 matplotlib
 scipy
+pytest
