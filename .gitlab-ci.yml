@@ -24,7 +24,7 @@ cache:
 # This is a basic example for a packages or script which doesn't use
 # services such as redis or postgres
 before_script:
-  - docker info
+  - docker -ti prosi3d:latest
 
 build_image:
   script:
@@ -33,7 +33,7 @@ build_image:
 
 .test_script: &test_script
   script:
-    - docker run prosi3d:latest tox
+    - tox
   # OR if you don't use tox:
   # - pytest
 
@@ -43,7 +43,7 @@ tests:
 
 docs:
   script:
-    - docker run prosi3d:latest tox -e docs
+    - tox -e docs
 
 # This deploy job uses a simple deploy flow to Heroku, other providers, e.g. AWS Elastic Beanstalk
 # are supported too: https://github.com/travis-ci/dpl
