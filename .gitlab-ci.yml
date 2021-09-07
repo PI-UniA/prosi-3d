@@ -33,31 +33,13 @@ build_image:
 
 .test_script: &test_script
   script:
-    - tox
+    - docker run prosi3d tox
   # OR if you don't use tox:
   # - pytest
 
-# Run in different environments
-py36:
-  image: "python:3.6"
-  <<: *test_script
-
-py37:
-  image: "python:3.7"
-  <<: *test_script
-
-py38:
-  image: "python:3.8"
-  <<: *test_script
-
-py39:
-  image: "python:3.9"
-  <<: *test_script
-
-
 docs:
   script:
-    - tox -e docs
+    - docker run prosi3d tox -e docs
 
 # This deploy job uses a simple deploy flow to Heroku, other providers, e.g. AWS Elastic Beanstalk
 # are supported too: https://github.com/travis-ci/dpl
