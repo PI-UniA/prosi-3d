@@ -23,42 +23,26 @@ cache:
 
 # This is a basic example for a packages or script which doesn't use
 # services such as redis or postgres
-before_script:
-  - python -v                                   # Print out Python version for debugging
-  # Setup git
-  - apt-get install git
-  - git config --global user.email "you@example.com"
-  - git config --global user.name "Your Name"
-  # Install dependencies for the testing environment
-  - pip install -U pip setuptools
-  - pip install -U tox
+
+build_image:
+  script:
+    - docker build -t prosi3d .
+    - docker run prosi3d
 
 .test_script: &test_script
   script:
+    - docker run prosi3d:latest
     - tox
   # OR if you don't use tox:
   # - pytest
 
-# Run in different environments
-py36:
-  image: "python:3.6"
+tests:
+  image: "prosi3d:latest"
   <<: *test_script
-
-py37:
-  image: "python:3.7"
-  <<: *test_script
-
-py38:
-  image: "python:3.8"
-  <<: *test_script
-
-py39:
-  image: "python:3.9"
-  <<: *test_script
-
 
 docs:
   script:
+    - docker run prosi3d:latest
     - tox -e docs
 
 # This deploy job uses a simple deploy flow to Heroku, other providers, e.g. AWS Elastic Beanstalk

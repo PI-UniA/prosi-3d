@@ -1,10 +1,12 @@
-name: prosi3d
+name: base
 channels:
   - defaults
   - conda-forge
 dependencies:
   - python=3.7
   - keras
+  - numpy
+  - matplotlib
   - h5py
   - sphinx
   - autopep8
