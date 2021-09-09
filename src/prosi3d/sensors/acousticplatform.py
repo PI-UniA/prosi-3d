@@ -22,11 +22,14 @@ class Accousticplatform(FeatureExtractor):
 
     
     def get_data(self, hdf):
-        """ Extract the measurements of the accousticplatform sensor from the hdf5 file.
+        """ Extract the measurements of the accousticplatform from the hdf5 file
         
         Args:
-            hdf (str): path of the hdf5 file.
+            hdf: path of the hdf5 file.
 
+        Returns:
+            Assign the measurements to the attribute yt and the time values to the attribute xt
+        
         Raises:
             IOError: File can not found.
         """
@@ -36,7 +39,7 @@ class Accousticplatform(FeatureExtractor):
         
 
     def process(self):
-        """ Convert the signal of the time domain to the representation in the frequency domain using the rFFT. Identify particularly conspicuous peaks in the frequency domain. """
+        """ Convert the signal of the time domain to a representation in the frequency domain using the rFFT. Identify particularly conspicuous peaks in the frequency domain. """
         
         # method to replace nan values
         self._replace_nan()
@@ -55,7 +58,9 @@ class Accousticplatform(FeatureExtractor):
 
     
     def write(self):
-        """ Print the conspicuous peaks which are detected in the method Accousticair.process(). The frequency and the power spectral density are saved in numpy arrays. """
+        """
+        Print the x-values and the y-values of the peaks which are saved in to numpy arrays.
+        """
 
         print("x-Werte Peaks: ", self.peaks_x)
         print("y-Werte Peaks: ", self.peaks_y)
