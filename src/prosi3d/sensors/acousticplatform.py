@@ -9,45 +9,69 @@ from prosi3d.sensors.methodsCollection import MethodsCollections
 """ Subclass from Abstract Base Class featureExtractor that outputs features of the raw data that are required for machine learning models """
 class Accousticplatform(FeatureExtractor):
 
-    """
-    xxxxx
+    """ Accousticplatform is subclass of FeatureExtractor providing the Methods get_data, process, and write.
+        
+        Attribute: 
+            xt:
+            yt:
+            xf: 
+            yf:
+            peaks_x:
+            peaks_y:
     """
 
-    """ Abstract method from preprocessor to extract the data from the hdf5 """
+
+    
     def get_data(self, hdf):
+        """ Extract the measurements of the accousticplatform from the hdf5 file
+        
+        Args:
+            hdf: path of the hdf5 file.
+
+        Returns:
+            Assign the measurements to the attribute yt and the time values to the attribute xt
+        
+        Raises:
+            IOError: File can not found.
+        """
        
-        """ method to read teh hdf5 file """
+        # method to read the hdf5 file
         self._read_measurements(hdf)
         
 
-    """ Abstract method from preprocessor to process the data (FFT, find peaks) """
     def process(self):
+        """ Convert the signal of the time domain to a representation in the frequency domain using the rFFT. Identify particularly conspicuous peaks in the frequency domain. """
         
-        """ method to replace nan values """
+        # method to replace nan values
         self._replace_nan()
         
-        """ method to shift the x-axis to the mean """
+        # method to shift the x-axis to the mean
         self._move_to_mean()
 
-        """ method to create the frequency datas (freqence, power spectral density) """
+        # method to create the frequency datas (freqence, power spectral density)
         self._create_FFT()
 
-        """ method to find peaks """
+        # method to find peaks
         peaks = self._find_peaks_values()
         self.peaks_x = np.array([self.xf[peaks[0]]])
         self.peaks_y = np.array([self.yf[peaks[0]]])
 
 
-    """ Abstract method from preprocessor to print the peaks """
+    
     def write(self):
-        ###Aktuell: Numpy array mit x-Werten von Peak und Numpy Array mit y-Werten von Peak
+        """ Print the x-values and the y-values of the peaks which are saved in to numpy arrays.
+        
+        """
+
         print("x-Werte Peaks: ", self.peaks_x)
         print("y-Werte Peaks: ", self.peaks_y)
 
 
     """ Abstract method from freatureExtractor to create the time domain """
     def _read_measurements(self, hdf):
-        sensorwert = 2 ###Sensorwert: Annahme 2!
+        
+        # Measurements of the accousticplatform in column 3
+        sensorwert = 2 
         self.xt, self.yt = MethodsCollections._read_measurements_C(hdf, sensorwert)
 
 
@@ -70,12 +94,12 @@ class Accousticplatform(FeatureExtractor):
     def _find_peaks_values(self):
         
         try:
-            ###Parameter müssen noch gewählt werden, siehe https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html
+            # TODO Parameter müssen noch gewählt werden, siehe https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html
             height = 1*1e-6
             distance = None
             prominence = None
 
-            """return value: index of the peaks"""
+            # return value: index of the peaks
             peaks = find_peaks(self.yf, height, distance, prominence)
             
             return peaks
@@ -87,27 +111,29 @@ class Accousticplatform(FeatureExtractor):
 
 
 
-    """ method to plot the diagramms and the peaks """
-    ###Nur derzeitig zum Testen enthalten (kann später entfernt werden)
+    # Nur derzeitig zum Testen enthalten (kann später entfernt werden)
     def plot_test(self):
+        """ Plot the diagramms with the identified peaks in order to check the methods 
+        
+        """
         try:
             fig, ax = plt.subplots(2)
             
         
-            """ plot time Domain """
+            # plot time domain
             ax[0].plot(self.xt, self.yt, linewidth=0.1)
             ax[0].set_title('Zeitbereich')
             ax[0].set_xlabel('Zeit in [ms]')
             ax[0].set_ylabel('Sensormesswert')
 
-            """plot frequency domain"""
+            # plot frequency domain
             ax[1].scatter(self.xf, self.yf, s=2)
             ax[1].set_title(f'Frequenzbereich')
             ax[1].set_xlabel('Frequenz in [Hz]')
             ax[1].set_ylabel('Spektale Leistungsdichte')
             plt.ylim(-0.0000005, 0.000005) ###Achtung: Wurde angepasst
 
-            """plot peaks"""
+            # plot peaks
             ax[1].scatter(self.peaks_x, self.peaks_y, marker="x")
 
             fig.suptitle("Accousticplatform")
