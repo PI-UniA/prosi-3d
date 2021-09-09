@@ -10,12 +10,18 @@ class Preprocessor(ABC):
     """
     @abstractmethod
     def get_data(self):
+        """ Abtract class  
+        """
         pass
 
     @abstractmethod
     def process(self):
+        """ Abstract class
+        """
         pass
 
     @abstractmethod
     def write(self):
+        """ Abstract class  
+        """
         pass
