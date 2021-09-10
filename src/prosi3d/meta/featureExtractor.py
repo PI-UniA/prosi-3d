@@ -12,29 +12,24 @@ class FeatureExtractor(Preprocessor):
 
     """ Custom, specific methods for feature-type Preprocessors """
     
-    ###Diese Methode habe ich nicht verwendet
-    #""" Extract the RMS of the signal """
-    #@abstractmethod
-    #def _rms(self):
-    #    pass
 
-    """ Extract the measurements from the hdf5 """
+    # Extract the measurements from the hdf5
     @abstractmethod
     def _read_measurements(self, hdf):
         pass
 
-    """ Replace nan values """
+    # Replace nan values
     @abstractmethod
     def _replace_nan(self):
         pass
 
-    """ Create the FFT based on the time values """
+    # Create the FFT based on the time values
     @abstractmethod
     def _create_FFT(self):
         pass
     
 
-    """ Extract the peaks in freqency domain """
+    # Extract the peaks in freqency domain
     @abstractmethod
     def _find_peaks_values(self):
         pass
