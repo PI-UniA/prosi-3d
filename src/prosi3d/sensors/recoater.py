@@ -13,9 +13,10 @@ from prosi3d.sensors._methodsCollection import _MethodsCollections
 class Recoater(FeatureExtractor):
 
     """ 
-        Attribute: 
-            peaks_x (numpy.array): frequency of the peaks
-            peaks_y (numpy.array): spectral power density of the peaks
+    Attribute: 
+        peaks_x (numpy.array): frequency of the peaks.
+        
+        peaks_y (numpy.array): spectral power density of the peaks.
     """
     
     def get_data(self, hdf):

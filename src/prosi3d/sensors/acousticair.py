@@ -1,6 +1,4 @@
-"""
-Subclass from Abstract Base Class featureExtractor that outputs features of the raw data that are required for machine learning models
-"""
+""" Subclass from Abstract Base Class featureExtractor that outputs features of the raw data that are required for machine learning models """
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,15 +12,16 @@ from prosi3d.sensors._methodsCollection import _MethodsCollections
 
 class Accousticair(FeatureExtractor):
 
-    """ TITEL
-
+    """
     Attribute: 
-        peaks_x (numpy.array): frequency of the peaks
-        peaks_y (numpy.array): spectral power density of the peaks
+        peaks_x (numpy.array): frequency of the peaks.
+        
+        peaks_y (numpy.array): spectral power density of the peaks.
     """
 
     def get_data(self, hdf):
         """ Extract the measurements of the accousticair sensor from the hdf5 file. 
+        
         Args:
             hdf (String): path of the hdf5 file.
 
