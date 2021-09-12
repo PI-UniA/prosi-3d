@@ -130,7 +130,7 @@ class Accousticplatform(FeatureExtractor):
     # Find peaks over a boundary in frequency domain
     def _peaks_over_boundary_fre (yf):
         # TODO: Boundary Wert muss noch angepasst werden
-        x = 2 * 1e-6
+        x = math.log10(2 * 1e-6)
         array = [math.log10(i) > x for i in yf]
         return sum(array)
 
