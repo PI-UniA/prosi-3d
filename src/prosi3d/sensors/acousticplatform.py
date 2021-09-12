@@ -25,7 +25,7 @@ class Accousticplatform(FeatureExtractor):
         """ Extract the measurements of the accousticplatform sensor from the hdf5 file.
         
         Args:
-            hdf (String): path of the hdf5 file.
+            hdf (str): path of the hdf5 file.
 
         Raises:
             IOError: File can not found.
