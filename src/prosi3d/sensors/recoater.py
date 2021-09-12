@@ -118,39 +118,37 @@ class Recoater(FeatureExtractor):
 
 
 
-    """ Calculate the varianz """
+    # Calculate the varianz
     def _var_time (y):
         return np.var(y)
 
-    """ Find peaks over a boundary in frequency domain """
+    # Find peaks over a boundary in frequency domain 
     def _peaks_over_boundary_fre (yf):
-        ###Boundary Wert muss noch angepasst werden
-        x = 5
+        # TODO: Boundary Wert muss noch angepasst werden
+        x = 2 * 1e-6
         array = [math.log10(i) > x for i in yf]
         return sum(array)
     
-    """ Find peaks over a boundary in time domain """
+    # Find peaks over a boundary in time domain 
     def _peaks_over_boundary_time (y):
-        ###Boundary Wert muss noch angepasst werden
-        x = 5
+        # TODO: Boundary Wert muss noch angepasst werden
+        x = 0.2
         array = [math.log10(i) > x for i in y]
         return sum(array)
 
 
+    def get_feature(self):
+        """ Determine the sensor specific features as array [variance, peaks over a boundary xxx in the frequency domain, peaks over a boundary xxx in the time domain]. 
+            Call get_data and process before using this method otherwise this method throws a error.
 
-    """ Get the features as array """
-    def get_feature(self, hdf_name):
-        ### Ausgangslage: Bereitstellung der Sensordaten je Schicht in einer Datei
-        ### Aus gesamten Array muss Spalte zum entsprechenden Sensor herausgeschnitten werden
+        Returns:
+            features (numpy.ndarray): Array with the sensor specific features. 
+        """
 
-        hdf = h5.File(hdf_name, 'r')
-        #accousticplatform in column 4 
-        sensorwert = 3
-        measurements = np.array(hdf.get('df')['block0_values'][:, sensorwert])
-
-        var = Recoater._var_time (measurements)
-        count_peaks_fre = Recoater._peaks_over_boundary_fre(measurements)
-        count_peaks_time = Recoater._peaks_over_boundary_time(measurements)
+        # zuvor: Vorverarbeitung der Sensordaten je Schicht über die Methoden get_data u. process und Herausschneiden der Spalte des Sensors "recoater"
+        var = Recoater._var_time (self.yt)
+        count_peaks_fre = Recoater._peaks_over_boundary_fre(self.yf)
+        count_peaks_time = Recoater._peaks_over_boundary_time(self.yt)
 
         features = [var, count_peaks_fre, count_peaks_time]
 
