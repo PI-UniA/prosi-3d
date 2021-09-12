@@ -12,9 +12,9 @@ class Accousticplatform(FeatureExtractor):
 
     """ 
     Attribute: 
-        peaks_x (numpy.array): frequency of the peaks.
+        peaks_x (numpy.ndarray): frequency of the peaks.
         
-        peaks_y (numpy.array): spectral power density of the peaks.
+        peaks_y (numpy.ndarray): spectral power density of the peaks.
     """
 
 
@@ -23,7 +23,7 @@ class Accousticplatform(FeatureExtractor):
         """ Extract the measurements of the accousticplatform sensor from the hdf5 file.
         
         Args:
-            hdf (String): path of the hdf5 file.
+            hdf (str): path of the hdf5 file.
 
         Raises:
             IOError: File can not found.
@@ -53,7 +53,7 @@ class Accousticplatform(FeatureExtractor):
 
     
     def write(self):
-        """ Print the x-values and the y-values of the peaks (frequency domain) which are saved in numpy arrays. """
+        """ Print the conspicuous peaks which are detected in the method Accousticair.process(). The frequency and the power spectral density are saved in numpy arrays. """
 
         print("x-Werte Peaks: ", self.peaks_x)
         print("y-Werte Peaks: ", self.peaks_y)
