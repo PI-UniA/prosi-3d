@@ -123,38 +123,36 @@ class Accousticplatform(FeatureExtractor):
 
 
 
-    """ Calculate the varianz """
+    # Calculate the varianz
     def _var_time (y):
         return np.var(y)
 
-    """ Find peaks over a boundary in frequency domain """
+    # Find peaks over a boundary in frequency domain
     def _peaks_over_boundary_fre (yf):
-        ###Boundary Wert muss noch angepasst werden
-        x = 5
+        # TODO: Boundary Wert muss noch angepasst werden
+        x = 2 * 1e-6
         array = [math.log10(i) > x for i in yf]
         return sum(array)
 
 
-    """ Main component analyse """ 
+    # Main component analyse 
     def _main_component_PCA (y):
-        ###Implementierung der Methode fehlt noch
+        # TODO: Implementierung der Methode fehlt noch
         pass
 
 
+    def get_feature(self):
+        """ Determine the sensor specific features as array [variance, peaks over a boundary xxx in the frequency domain, main components of the PCA]. 
+            Call get_data and process before using this method otherwise this method throws a error.
 
-    """ Get the features as array """
-    def get_feature(self, hdf_name):
-        ### Ausgangslage: Bereitstellung der Sensordaten je Schicht in einer Datei
-        ### Aus gesamten Array muss Spalte zum entsprechenden Sensor herausgeschnitten werden
+        Returns:
+            features (numpy.ndarray): Array with the sensor specific features. 
+        """
 
-        hdf = h5.File(hdf_name, 'r')
-        #accousticplatform in column 3 
-        sensorwert = 2
-        measurements = np.array(hdf.get('df')['block0_values'][:, sensorwert])
-
-        var = Accousticplatform._var_time (measurements)
-        count_peaks_fre = Accousticplatform._peaks_over_boundary_fre(measurements)
-        count_peaks_time = Accousticplatform._main_component_PCA(measurements)
+        # zuvor: Vorverarbeitung der Sensordaten je Schicht über die Methoden get_data u. process und Herausschneiden der Spalte des Sensors "accousticplatform"
+        var = Accousticplatform._var_time (self.yt)
+        count_peaks_fre = Accousticplatform._peaks_over_boundary_fre(self.yf)
+        count_peaks_time = Accousticplatform._main_component_PCA(self.yf)
 
         features = [var, count_peaks_fre, count_peaks_time]
         
