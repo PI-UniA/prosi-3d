@@ -116,9 +116,19 @@ class Accousticair(FeatureExtractor):
             raise Exception("Fehler in der Methode plot_test der Klasse Accousticair. Fehlertyp: ", sys.exc_info()[0])
     
 
-    def assignment_position_measurements(self, hdf_name):
+    def assignment_measurements_to_position(self, hdf_name):
         """
-        
+        Assign the sensor measurements to the EOS preprocessing data (x position, y position, partId, exposure) using the past time and the layer.
+
+        Args:
+            hdf (str): path of the hdf5 file.
+
+        Returns:
+            res_matrix (numpy.ndarray): Numy Array with (x, y, partId, exposure, measurement).
+
+        Raises:
+            xxx.
+
         """
 
         try: 
@@ -154,8 +164,9 @@ class Accousticair(FeatureExtractor):
             
 
             
-            # Bereich mit ersten Peak noch nicht errreicht, ganzes ttl Signal wird betrachtet
+            # Bereich mit ersten Peak noch nicht errreicht, ganzes TTL Signal wird betrachtet
             if (peaks_max.size == 0):
+
                 # Ersten Peak (Maximum mit Wert > 1) suchen
                 peaks_max = find_peaks (ttl, height = 1)[0]
                 first_peak_x = peaks_max[0]
@@ -178,7 +189,9 @@ class Accousticair(FeatureExtractor):
                     
                     i = i - 1
             
-            print("Erster Peak bei:", "(", first_peak_x, ",", first_peak_y, ")")
+
+
+            print("First Peak :", "(", first_peak_x, ",", first_peak_y, ")")
             print("Min before peak:" , "(", min_before_peak_x, ", ", min_before_peak_y, ")")
             print("Min before peak (modified):" , "(", min_before_peak_mod_x, ", ", min_before_peak_mod_y, ")")
 
@@ -188,20 +201,22 @@ class Accousticair(FeatureExtractor):
             plt.plot(first_peak_x, first_peak_y,  marker = 'x')
             plt.show()
 
-            # Zeit: startzeitpunkt + 50 kHz (= konstante Zeit zwischen zwei Sensorwerten = 0,02ms)
-            time_between_measurements = 1/50000 #?
 
+
+
+            # konstante Zeit zwischen zwei Sensorwerten: 50 kHz = 0,02 ms
+            time_between_measurements = 1/50000 # TODO: Wert richtig?
             
-            #Beispiel Start
-            start_value = 473300
+            # Start
+            start_value = 473300 # TODO: x-Wert von oben zuweisen
             time = 0
 
-            # Beispiel-Array zum Testen: 
+            #Beispiel-Array zum Testen: 
             example = np.array([[5,5,1,7], [5,10,1,7], [5,15,2,7]])
-
             i=0
 
-            # Startwerte setzen: time = 0 (i=0)
+            # Startwerte setzen: time = 0 
+            #res_matrix = np.append(getXY_lin(0, layer), ttl[start_value]
             res_matrix = np.append(example[0], ttl[start_value])
             # 1D to 2D Array
             res_matrix = np.reshape(res_matrix,(1, res_matrix.size))
@@ -209,33 +224,27 @@ class Accousticair(FeatureExtractor):
             #for value in range (start_value+1, ttl.shape[0]+1):
             for value in range (start_value+1, start_value + example.shape[0]):
                  
-                # mit Björns Methode: getXY_lin
-                # Input: Zeit, Layer
-                ### Layer aus hdf_name: 
-                ### Zeit bestimmen:
+                # mit Björns Methode: getXY_lin --> Input: Zeit, Layer --> Output: Array (xtime, ytime, int (partId), int (exposure))
+                # TODO: layer bestimmen (aus hdf_name oder als Parameter an Methode übergeben?)
                 time = time + time_between_measurements
-                # Array (xtime, ytime, int (partId), int (exposure))
-
-                #Beispielwerte zum Testen:
+                #laser_values = getXY_lin(time, layer)
+                
+                #zum Testen
                 i=i+1
                 laser_values = example[i]
 
-                measurement = ttl[value]
+                # Dazugehörigen Sensorwert bestimmen
+                measurement = self.yt [value]
 
-                #Zusammenfügen (x,y,partId,exposure,measurement value) für Zeitwert time
+                #Zusammenfügen für bestimmten Zeitwert time
                 new = np.append(laser_values, measurement)
                 
-                #Ins Array hinzufügen
+                #Ans Array hinzufügen (je Zeitwert eine Zeile)
                 res_matrix = np.append(res_matrix,[new],axis= 0)
 
             print ("MATRIX", res_matrix)
 
-
-
-
-            # Ziel: (x,y, partId, exposure, sensorwert)
-            
-
+            return res_matrix
 
 
         
