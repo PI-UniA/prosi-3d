@@ -5,7 +5,7 @@ Subclass from Abstract Base Class featureExtractor that outputs features of the 
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py as h5
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, argrelextrema
 import sys
 
 from prosi3d.meta.featureExtractor import FeatureExtractor
@@ -117,31 +117,93 @@ class Accousticair(FeatureExtractor):
     
 
     def assignment_position_measurements(self, hdf_name):
+        """
+        
+        """
+
         try: 
         
-            #hdf TTL Signal einlesen
+            # TTL Signal aus hdf herauslesen 
+            # TODO: Macht es Sinn den Dateipfad als Attribute z.B. in Methode get_data zu hinterlegen (Parameter würde entfallen)? 
             hdf = h5.File(hdf_name, 'r')
-            """ Extract Measurements for the y-axis """
-            ttl = np.array(hdf.get('df')['block0_values'][:, 1])
+            # Aus Rechenleistungsgründen wird nur der Anfang des TTL Signals betrachtet
+            ttl = np.array(hdf.get('df')['block0_values'][:1000000, 1])
            
-            #plt.plot(ttl, linewidth=0.1)
-            #plt.show()
 
-            # Zeit: startzeitpunkt + 50 Hz (= konstante Zeit zwischen zwei Sensorwerten = 0,02s)
+            # Ersten Peak (Maximum mit Wert > 1) suchen
+            peaks_max = find_peaks (ttl, height = 1)[0]
+            first_peak_x = peaks_max[0]
+            first_peak_y = ttl[first_peak_x]
+
+            # Lokales Minimum vor dem ersten Peak
+            peaks_min = argrelextrema(ttl, np.less) [0]
+            peaks_min = peaks_min[peaks_min <= first_peak_x]
+            min_before_peak_x = peaks_min[-1]
+            min_before_peak_y = ttl[min_before_peak_x]
+
+            # Lokales Minimum vor dem ersten Peak, welches sich zwischen -0.01 und 0.01 befindet
+            i = -1
+            while True:
+                measurement = ttl[peaks_min[i]]
+                if (measurement > -0.01) & (measurement < 0.01):
+                    min_before_peak_mod_x = peaks_min[i]
+                    min_before_peak_mod_y = measurement
+                    break
+                
+                i = i - 1
+            
+
+            
+            # Bereich mit ersten Peak noch nicht errreicht, ganzes ttl Signal wird betrachtet
+            if (peaks_max.size == 0):
+                # Ersten Peak (Maximum mit Wert > 1) suchen
+                peaks_max = find_peaks (ttl, height = 1)[0]
+                first_peak_x = peaks_max[0]
+                first_peak_y = ttl[first_peak_x]
+
+                # Lokales Minimum vor dem ersten Peak
+                peaks_min = argrelextrema(ttl, np.less) [0]
+                peaks_min = peaks_min[peaks_min <= first_peak_x]
+                min_before_peak_x = peaks_min[-1]
+                min_before_peak_y = ttl[min_before_peak_x]
+
+                # Lokales Minimum vor dem ersten Peak, welches sich zwischen -0.01 und 0.01 befindet
+                i = -1
+                while True:
+                    measurement = ttl[peaks_min[i]]
+                    if (measurement > -0.01) & (measurement < 0.01):
+                        min_before_peak_mod_x = peaks_min[i]
+                        min_before_peak_mod_y = measurement
+                        break
+                    
+                    i = i - 1
+            
+            print("Erster Peak bei:", "(", first_peak_x, ",", first_peak_y, ")")
+            print("Min before peak:" , "(", min_before_peak_x, ", ", min_before_peak_y, ")")
+            print("Min before peak (modified):" , "(", min_before_peak_mod_x, ", ", min_before_peak_mod_y, ")")
+
+            plt.plot(ttl, linewidth=0.1)
+            plt.plot(min_before_peak_x, min_before_peak_y, marker ='x')
+            plt.plot(min_before_peak_mod_x, min_before_peak_mod_y, marker ='x')
+            plt.plot(first_peak_x, first_peak_y,  marker = 'x')
+            plt.show()
+
+            # Zeit: startzeitpunkt + 50 kHz (= konstante Zeit zwischen zwei Sensorwerten = 0,02ms)
             time_between_measurements = 1/50000 #?
 
-            ###Startpunkt suchen: Einfachste Lösung TTL-Signal über bestimmten Wert, fraglich ob ausreichend? Anstieg des Mittelwerts?
             
+            #Beispiel Start
             start_value = 473300
             time = 0
 
-            #Beispiel-Array zum Testen: 
+            # Beispiel-Array zum Testen: 
             example = np.array([[5,5,1,7], [5,10,1,7], [5,15,2,7]])
+
             i=0
 
-            #Startwerte setzen: time = 0 (i=0)
+            # Startwerte setzen: time = 0 (i=0)
             res_matrix = np.append(example[0], ttl[start_value])
-            #1D to 2D Array
+            # 1D to 2D Array
             res_matrix = np.reshape(res_matrix,(1, res_matrix.size))
 
             #for value in range (start_value+1, ttl.shape[0]+1):
@@ -163,7 +225,7 @@ class Accousticair(FeatureExtractor):
                 #Zusammenfügen (x,y,partId,exposure,measurement value) für Zeitwert time
                 new = np.append(laser_values, measurement)
                 
-                #In Array hinzufügen
+                #Ins Array hinzufügen
                 res_matrix = np.append(res_matrix,[new],axis= 0)
 
             print ("MATRIX", res_matrix)
