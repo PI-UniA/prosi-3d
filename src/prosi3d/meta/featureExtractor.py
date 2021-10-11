@@ -41,5 +41,5 @@ class FeatureExtractor(Preprocessor):
     
     """assignment position of the laser (x,y) to the measurements (time signal) """
     @abstractmethod
-    def assignment_position_measurements(self):
+    def assignment_measurements_to_position(self, hdf_name):
         pass

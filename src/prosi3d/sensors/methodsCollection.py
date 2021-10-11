@@ -17,7 +17,7 @@ class MethodsCollections():
             ###aktuelle Annahme: Immer gleiche Spalte (--> Parameter)
             hdf = h5.File(hdf_name, 'r')
             """ Extract Measurements for the y-axis """
-            measurements = np.array(hdf.get('df')['block0_values'][0:10000, sensorwert]) ##Achtung: nicht alle Werte, um besser testen zu können!
+            measurements = np.array(hdf.get('df')['block0_values'][0:1000000, sensorwert]) ##Achtung: nicht alle Werte, um besser testen zu können!
             global sample_number 
             sample_number = measurements.shape[0]
             
