@@ -115,7 +115,7 @@ class Recoater(FeatureExtractor):
             raise Exception("Fehler in der Methode plot_test der Klasse Recoater. Fehlertyp: ", sys.exc_info()[0])
 
 
-    def assignment_position_measurements(self):
+    def assignment_measurements_to_position(self, hdf_name):
         try: 
             #mit Björns Methode erhält man Array (xtime, ytime, int (partId), int (exposure))
             #Beispiel-Array: 
