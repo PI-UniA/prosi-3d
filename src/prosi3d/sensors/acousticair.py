@@ -159,7 +159,7 @@ class Accousticair(FeatureExtractor):
             min_before_peak_y = ttl[min_before_peak_x]
 
             # Lokales Minimum oder Maximum vor dem ersten Peak, welches sich zwischen -0.05 und 0.05 befindet
-            #
+            
             peaks_max = argrelextrema(ttl, np.greater) [0]
             peaks_max = peaks_max[peaks_max < first_peak_x]
 
