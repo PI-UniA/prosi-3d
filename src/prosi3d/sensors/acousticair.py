@@ -2,12 +2,13 @@
 Subclass from Abstract Base Class featureExtractor that outputs features of the raw data that are required for machine learning models
 """
 
+from os import lchown
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py as h5
 from scipy.signal import find_peaks, argrelextrema
 import sys
-from scipy.signal import savgol_filter
+from scipy import signal
 
 from prosi3d.meta.featureExtractor import FeatureExtractor
 from prosi3d.sensors.methodsCollection import MethodsCollections
@@ -140,9 +141,21 @@ class Accousticair(FeatureExtractor):
             # Aus Rechenleistungsgründen wird nur der Anfang des TTL Signals betrachtet
             ttl = np.array(hdf.get('df')['block0_values'][:1000000, 1])
 
-            # Glätten mit Savgol_filter
-            window_length = 5
-            ttl_filtered = savgol_filter(ttl, window_length, 2)
+            # Glätten Bandpassfilter
+            lowcut = 500.0
+            highcut = 1250.0
+            fs = 5000.0
+
+            nyq = 0.5 * fs
+            low = lowcut / nyq
+            high = highcut / nyq
+
+            order = 5
+            Wn= [low, high]
+            btype = 'bandpass'
+            analog = False
+            b, a = signal.butter(order, Wn, btype, analog)
+            ttl_filtered = signal.filtfilt(b, a, ttl, axis=0)
 
 
             ### ungefiltertes Signal!!!
