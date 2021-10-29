@@ -140,46 +140,9 @@ class Accousticair(FeatureExtractor):
             hdf = h5.File(hdf_name, 'r')
             # Aus Rechenleistungsgründen wird nur der Anfang des TTL Signals betrachtet
             ttl = np.array(hdf.get('df')['block0_values'][:1000000, 1])
-            
-            #Finden von Zeitbereich ohne Sprünge
-            stop = 0.01
-            for i in range(0,ttl.shape[0]):
-                if (ttl[i]>stop):
-                    break
-        
-            ttl_new = ttl[0:i]
-            print("ttl_newe: ", ttl_new)
-            print("i: ", i)
 
-            # Umwandlung ttl: Zeitbereich in Frequenzbereich
-            ttl_without_nan = MethodsCollections._replace_nan_C(ttl_new)
-            ttl_move = MethodsCollections._move_to_mean(ttl_without_nan) 
-            frequence, ttl_FFT = MethodsCollections._create_FFT_C(ttl_move)
-            
-            plt.plot(frequence, ttl_FFT)
-            plt.show()           
-            # Glätten Bandpassfilter mit butter
-            # lowcut = 500.0
-            # highcut = 1250.0
-            # fs = 5000.0
-
-            # nyq = 0.5 * fs
-            # low = lowcut / nyq
-            # high = highcut / nyq
-
-            # order = 5
-            # Wn= [low, high]
-            # btype = 'bandpass'
-            # analog = False
-            # b, a = signal.butter(order, Wn, btype, analog)
-            # ttl_filtered = signal.filtfilt(b, a, ttl_FFT, axis=0)
-            ttl_filtered = ttl
-
-
-            ### ungefiltertes Signal!!!
-
-            # Ersten Peak (Maximum mit Wert > 1) suchen
-            peaks_max = find_peaks (ttl, height = 1)[0]
+            # Ersten Peak (Maximum mit Wert > 3) suchen
+            peaks_max = find_peaks (ttl, height = 3)[0]
             first_peak_x = peaks_max[0]
             first_peak_y = ttl[first_peak_x]
 
@@ -189,96 +152,12 @@ class Accousticair(FeatureExtractor):
             min_before_peak_x = peaks_min[-1]
             min_before_peak_y = ttl[min_before_peak_x]
 
-            # Lokales Minimum oder Maximum vor dem ersten Peak, welches sich zwischen -0.05 und 0.05 befindet
-            
-            peaks_max = argrelextrema(ttl, np.greater) [0]
-            peaks_max = peaks_max[peaks_max < first_peak_x]
 
-            # Suche erstes lokales Maximum vor Peak innerhalb der Boundary
-            i = -1
-            while True:
-                measurement = ttl[peaks_max[i]]
-                if (measurement > -0.05) & (measurement < 0.05):
-                    max_before_peak_x = peaks_max[i]
-                    max_before_peak_y = measurement
-                    break
-                
-                i = i - 1
-
-            # Suche erstes lokales Minimum vor Peak innerhalb der Boundary
-            i = -1
-            while True:
-                measurement = ttl[peaks_min[i]]
-                if (measurement > -0.05) & (measurement < 0.05):
-                    min_before_peak_mod_x = peaks_min[i]
-                    min_before_peak_mod_y = measurement
-                    break
-                
-                i = i - 1
-            
-            if min_before_peak_mod_x > max_before_peak_x:
-                point_mod_x = min_before_peak_mod_x
-                point_mod_y = min_before_peak_mod_y
-            else:
-                point_mod_x = max_before_peak_x
-                point_mod_y = max_before_peak_y
-
-            
-            ### gefiltertes Signal!!
-
-            # Ersten Peak (Maximum mit Wert > 1) suchen
-            peaks_max_filtered = find_peaks (ttl_filtered, height = 1)[0]
-            first_peak_x_filtered = peaks_max_filtered[0]
-            first_peak_y_filtered = ttl_filtered[first_peak_x_filtered]
-
-            # Lokales Minimum vor dem ersten Peak
-            peaks_min_filtered = argrelextrema(ttl_filtered, np.less) [0]
-            peaks_min_filtered = peaks_min_filtered[peaks_min_filtered <= first_peak_x_filtered]
-            min_before_peak_x_filtered = peaks_min_filtered[-1]
-            min_before_peak_y_filtered = ttl_filtered[min_before_peak_x_filtered]
-
-            # Lokales Minimum oder Maximum vor dem ersten Peak, welches sich zwischen -0.05 und 0.05 befindet
-            peaks_max = argrelextrema(ttl_filtered, np.greater) [0]
-            peaks_max = peaks_max[peaks_max < first_peak_x_filtered]
-            
-            # Suche erstes lokales Maximum vor Peak innerhalb der Boundary
-            i = -1
-            while True:
-                measurement_filtered = ttl_filtered[peaks_max[i]]
-                if (measurement_filtered > -0.05) & (measurement_filtered < 0.05):
-                    max_before_peak_x_filtered = peaks_max[i]
-                    max_before_peak_y_filtered = measurement_filtered
-                    break
-                
-                i = i - 1
-
-
-
-            # Suche erstes lokales Minimum vor Peak innerhalb der Boundary
-            i = -1
-            while True:
-                measurement_filtered = ttl_filtered[peaks_min_filtered[i]]
-                if (measurement_filtered > -0.05) & (measurement_filtered < 0.05):
-                    min_before_peak_mod_x_filtered = peaks_min_filtered[i]
-                    min_before_peak_mod_y_filtered = measurement_filtered
-                    break
-                
-                i = i - 1
-            
-            if min_before_peak_mod_x_filtered > max_before_peak_x_filtered:
-                point_mod_x_filtered = min_before_peak_mod_x_filtered
-                point_mod_y_filtered = min_before_peak_mod_y_filtered
-            else:
-                point_mod_x_filtered = max_before_peak_x_filtered
-                point_mod_y_filtered = max_before_peak_y_filtered
-
-
-
-            # Bereich mit ersten Peak noch nicht errreicht, ganzes TTL Signal wird betrachtet
+            # betrachteter Bereich mit ersten Peak noch nicht errreicht, ganzes TTL Signal wird betrachtet
             # if (peaks_max.size == 0):
 
-            #     # Ersten Peak (Maximum mit Wert > 1) suchen
-            #     peaks_max = find_peaks (ttl, height = 1)[0]
+            #     # Ersten Peak (Maximum mit Wert > 3) suchen
+            #     peaks_max = find_peaks (ttl, height = 3)[0]
             #     first_peak_x = peaks_max[0]
             #     first_peak_y = ttl[first_peak_x]
 
@@ -288,50 +167,15 @@ class Accousticair(FeatureExtractor):
             #     min_before_peak_x = peaks_min[-1]
             #     min_before_peak_y = ttl[min_before_peak_x]
 
-            #     # Lokales Minimum vor dem ersten Peak, welches sich zwischen -0.01 und 0.01 befindet
-            #     i = -1
-            #     while True:
-            #         measurement = ttl[peaks_min[i]]
-            #         if (measurement > -0.01) & (measurement < 0.01):
-            #             min_before_peak_mod_x = peaks_min[i]
-            #             min_before_peak_mod_y = measurement
-            #             break
-                    
-            #         i = i - 1
             
-
-            #unfilterd
             print("First Peak :", "(", first_peak_x, ",", first_peak_y, ")")
             print("Min before peak:" , "(", min_before_peak_x, ", ", min_before_peak_y, ")")
-            print("Min before peak (modified):" , "(", point_mod_x, ", ", point_mod_y, ")")
+ 
+            plt.plot(np.arange(470000,480000,1), ttl[470000:480000], linewidth=0.1,  c='b')
+            plt.scatter(np.arange(473267,473270,1),ttl[473267:473270], marker = 'x')
+            plt.scatter(min_before_peak_x, min_before_peak_y, marker ='o', c='r', s = 12.0)
+            plt.scatter(first_peak_x, first_peak_y,  marker = 'o',  c='r', s = 12.0)
 
-            #filtered
-            print("First Peak (filtered) :", "(", first_peak_x_filtered, ",", first_peak_y_filtered, ")")
-            print("Min before peak (filtered):" , "(", min_before_peak_x_filtered, ", ", min_before_peak_y_filtered, ")")
-            print("Min before peak (modified, filtered):" , "(", point_mod_x_filtered, ", ", point_mod_y_filtered, ")")
-            
-            #filtered and unfiltered in one graph
-            plt.plot(np.arange(470000,480000,1), ttl[470000:480000], linewidth=0.1,  c='r', label = "unfiltered")
-            plt.plot(min_before_peak_x, min_before_peak_y, marker ='x', c='r')
-            plt.plot(point_mod_x, point_mod_y, marker ='x', c='r')
-            plt.plot(first_peak_x, first_peak_y,  marker = 'x', c='r')
-
-            plt.plot(np.arange(470000,480000,1), ttl_filtered[470000:480000], linewidth=0.1,  c='b', label = "filtered")
-            plt.plot(min_before_peak_x_filtered, min_before_peak_y_filtered, marker ='x', c='b')
-            plt.plot(point_mod_x_filtered, point_mod_y_filtered, marker ='x',  c='b')
-            plt.plot(first_peak_x_filtered, first_peak_y_filtered,  marker = 'x',  c='b')
-
-            plt.legend()
-            plt.show()
-
-
-            #only unfiltered 
-            plt.plot(np.arange(470000,480000,1), ttl_filtered[470000:480000], linewidth=0.1,  c='b',label = "filtered")
-            plt.plot(min_before_peak_x_filtered, min_before_peak_y_filtered, marker ='x', c='b')
-            plt.plot(point_mod_x_filtered, point_mod_y_filtered, marker ='x',  c='b')
-            plt.plot(first_peak_x_filtered, first_peak_y_filtered,  marker = 'x',  c='b')
-
-            plt.legend()
             plt.show()
 
 
@@ -341,7 +185,7 @@ class Accousticair(FeatureExtractor):
             time_between_measurements = 1/50000 # TODO: Wert richtig?
             
             # Start
-            start_value = 47330 # TODO: x-Wert von oben zuweisen
+            start_value = min_before_peak_x
             time = 0
 
             #Beispiel-Array zum Testen: 
