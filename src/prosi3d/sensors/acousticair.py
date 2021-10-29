@@ -140,22 +140,40 @@ class Accousticair(FeatureExtractor):
             hdf = h5.File(hdf_name, 'r')
             # Aus Rechenleistungsgründen wird nur der Anfang des TTL Signals betrachtet
             ttl = np.array(hdf.get('df')['block0_values'][:1000000, 1])
+            
+            #Finden von Zeitbereich ohne Sprünge
+            stop = 0.01
+            for i in range(0,ttl.shape[0]):
+                if (ttl[i]>stop):
+                    break
+        
+            ttl_new = ttl[0:i]
+            print("ttl_newe: ", ttl_new)
+            print("i: ", i)
 
-            # Glätten Bandpassfilter
-            lowcut = 500.0
-            highcut = 1250.0
-            fs = 5000.0
+            # Umwandlung ttl: Zeitbereich in Frequenzbereich
+            ttl_without_nan = MethodsCollections._replace_nan_C(ttl_new)
+            ttl_move = MethodsCollections._move_to_mean(ttl_without_nan) 
+            frequence, ttl_FFT = MethodsCollections._create_FFT_C(ttl_move)
+            
+            plt.plot(frequence, ttl_FFT)
+            plt.show()           
+            # Glätten Bandpassfilter mit butter
+            # lowcut = 500.0
+            # highcut = 1250.0
+            # fs = 5000.0
 
-            nyq = 0.5 * fs
-            low = lowcut / nyq
-            high = highcut / nyq
+            # nyq = 0.5 * fs
+            # low = lowcut / nyq
+            # high = highcut / nyq
 
-            order = 5
-            Wn= [low, high]
-            btype = 'bandpass'
-            analog = False
-            b, a = signal.butter(order, Wn, btype, analog)
-            ttl_filtered = signal.filtfilt(b, a, ttl, axis=0)
+            # order = 5
+            # Wn= [low, high]
+            # btype = 'bandpass'
+            # analog = False
+            # b, a = signal.butter(order, Wn, btype, analog)
+            # ttl_filtered = signal.filtfilt(b, a, ttl_FFT, axis=0)
+            ttl_filtered = ttl
 
 
             ### ungefiltertes Signal!!!
@@ -366,7 +384,9 @@ class Accousticair(FeatureExtractor):
             raise Exception("Call get_data() and process() before using the method assignment_measurements_to_position(hdf_name).")
 
         except:
-            raise Exception("Fehler in der Methode assignment_measurements_to_position der Klasse Accousticair. Fehlertyp: ", sys.exc_info()[0])
+            exc_type, exc_obj, tb = sys.exc_info()
+            lineno = tb.tb_lineno
+            raise Exception("Fehler in der Methode assignment_measurements_to_position der Klasse Accousticair. Fehlertyp: ", sys.exc_info()[0], "Zeile: ", lineno)
     
 
 
