@@ -1,54 +1,101 @@
-# Offizielles Repository des StMWi Forschungsprojektes ProSi-3D - Prozesssicheres Laserstrahlschmelzen
+![License](https://img.shields.io/github/license/pzimbrod/prosi-3d)
+![Build Status](https://img.shields.io/github/workflow/status/pzimbrod/prosi-3d/ProSi-3D)
+[![Documentation Status](https://readthedocs.org/projects/prosi-3d/badge/?version=latest)](https://prosi-3d.readthedocs.io/en/latest/?badge=latest)
+![Issues](https://img.shields.io/github/issues/pzimbrod/prosi-3d)
+![PRs](https://img.shields.io/github/issues-pr/pzimbrod/prosi-3d)
 
-## Einführung
-Dieses Repository beinhaltet den im Forschungsprojekt erarbeiteten Code sowie die Konfigurationsdateien, um diesen in einem Docker Container laufen zu lassen. Dies dient dazu, um die Paketabhängigkeiten für jede Plattform aufzulösen und auf dem Client keine Konflikte mit bestehenden Python-Installationen zu erzeugen.
+# ProSi-3D: Robust and reliable process monitoring for Laser Powder Bed Fusion
 
-## Einrichten der API Umgebung
-Im Hauptverzeichnis befindet sich das `Dockerfile`, das die Konfiguration des Containers beschreibt. Die Basis ist eine Anaconda Installation mit Python 3. Die Abhängigkeiten sind in `env/environment.yml` zu finden. Sind weitere gewünscht, können diese hier einfach ergänzt werden.
+This repo contains the source for a adaptable and configurable process monotoring system, (mostly) based on `Python`.
+We also supply config files to run the package within a Docker container.
 
-Um den Container (einmalig) lokal zu erstellen, muss folgender Befehl im Hauptverzeichnis dieses Repositories in einem Terminal (Linux / OS X) oder der PowerShell ausgeführt werden:
+## Installation
 
-```bash
-docker build . -t prosi3d:latest
-```
+### Requirements
 
-Danach kann der Container jederzeit mit einem interaktiven Terminal gestartet werden:
-
-```bash
-docker run --rm -ti prosi3d
-```
-Für die Entwicklungsumgebung [VS Code](https://code.visualstudio.com) steht auch eine auf Docker basierende Entwicklungsumgebung als Remote Container zur Verfügung.
-
-Ansonsten funktioniert auch jede andere Anaconda Installation basierend auf Python 3.8, die die Abhängigkeiten in `env/environment.yml` enthält.
-
-## Einrichten der Frontend Umgebung
-
-Das Frontend kommuniziert eigenständig mit der API und kann im Browser unter `localhost:5005` adressiert werden. Der Stack basiert auf dem Open Source Git Repository "[django-dashboard-black](https://github.com/app-generator/django-dashboard-black)" von Appseed. Die Installation läuft vollständig in Docker ab und nutzt u.a. Django und NGINX, um die Web-Services zur Verfügung zu stellen.
-
-Um die Umgebung zu starten, müssen die einzelnen Docker-Services in der Kommandozeile assembliert und ausgeführt werden:
+The package deps are all listed in a `.yml` File in the `docker-env/` directory.
+To install them using conda:
 
 ```bash
-$ sudo docker-compose pull && sudo docker-compose build && sudo docker-compose up -d
+conda create --name prosi3d --file docker-env/environment.yml
 ```
 
-Alternativ kann auch eine lokale Installation wie in der [README-Datei](dashboard/README.md) beschrieben durchgeführt werden. Danach läuft der Service im Hintergrund und der Zugriff über den Browser ist möglich.
+### Using `tox`
 
-## Builds und Hinweise für Developer
-
-Das Package arbeitet mit `tox`. Damit lassen sich Builds einfach automatisch erzeugen, Tests automatisiert durchführen und die Dokumentation generieren lassen.
-Die jeweiligen Pipelines sind in der Datei `tox.ini` definiert. Um beispielsweise den dort definierten Workflow zur Erstellung der Dokumentation auszuführen, muss folgendes in ein Terminal eingegeben werden:
+For now, you can use the package by invoking the `tox` build system:
 
 ```bash
-tox -e docs
+tox -e build
 ```
+### Using `setuptools`
 
-Die generierten HTML-Dateien sind dann im Ordner `docs/_build/html` zu finden.
-
-Um mit den Dateien ad hoc zu arbeiten, sollte mithilfe von `setuptools` eine Dev-Version des Pakets erstellt werden.
-Das geht, indem man in einem Terminal im Hauptverzeichnis die Setup-Datei aufruft:
+Alternatively, you can use the Python package `setuptools` to build the local package:
 
 ```bash
 python setup.py develop
 ```
 
-Das Paket verhält sich dann wie ein normal installiertes. Es können also alle Klassen, Methoden und Objekte durch Import des Pakets `prosi3d` geladen werden
+### Using Docker
+
+Lastly, you can build and run the Docker container that comes along with the package:
+
+```bash
+docker build . -t prosi3d:latest
+```
+
+Run the container in a terminal:
+
+```bash
+docker run --rm -ti prosi3d:latest
+```
+
+## Usage/Examples
+
+After Installation, you can import and use the package in Python.
+Say, you want to process a data stream that comprises several acoustic sensors.
+You can then read the data from a HDF file and create their respective features easily and uniformly:
+
+```python
+from prosi3d.sensors.acousticair import Accousticair
+from prosi3d.sensors.acousticplatform import Accousticplatform
+from prosi3d.sensors.recoater import Recoater
+
+def test_analysis_loop():
+    hdf_name = 'data/ch4raw_00593.h5'
+
+    acc = Accousticair()
+    acc_p = Accousticplatform()
+    acc_r = Recoater()
+
+    sensors = [acc,acc_p,acc_r]
+
+    for sensor in sensors:
+        sensor.get_data(hdf_name)
+        sensor.process()
+        sensor.plot_test()
+        sensor.write()
+```
+
+
+## Contributing
+
+Contributions are always welcome!
+
+See `contributing.md` for ways to get started.
+
+Please adhere to this project's `code of conduct`.
+
+
+## Authors
+
+- [@pzimbrod](https://pzimbrod.github.io)
+- Björn Ringel
+- Anna-Lena Stolze
+
+
+## Acknowledgements
+
+This project is kindly funded by the [German Bavarian Ministry of Economic Affairs, Regional Development and Energy](https://www.stmwi.bayern.de/en/).
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
