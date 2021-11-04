@@ -24,3 +24,7 @@ jobs:
         pip install -r docs/requirements.txt
     - name: Test with tox
       run: tox
+    - name: Create the docs
+      run: tox -e docs
+    - name: Build the package
+      run: tox -e build
