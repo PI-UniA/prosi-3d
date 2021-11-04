@@ -9,3 +9,7 @@ numpy
 matplotlib
 scipy
 pytest
+autopep8
+setuptools
+setuptools_scm
+wheel
