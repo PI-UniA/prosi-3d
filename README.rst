@@ -1,5 +1,5 @@
 =======
-prosi3d
+ProSi-3D: Robust and reliable process monitoring for Laser Powder Bed Fusion
 =======
 
 Dieses Repository beinhaltet den im Forschungsprojekt erarbeiteten Code sowie die Konfigurationsdateien, um diesen in einem Docker Container laufen zu lassen. Dies dient dazu, um die Paketabhängigkeiten für jede Plattform aufzulösen und auf dem Client keine Konflikte mit bestehenden Python-Installationen zu erzeugen.
