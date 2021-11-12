@@ -89,8 +89,8 @@ Please adhere to this project's `code of conduct`.
 ## Authors
 
 - [@pzimbrod](https://pzimbrod.github.io)
-- Björn Ringel
-- Anna-Lena Stolze
+- [@bjoernri](https://github.com/bjoernri)
+- [@anna-lenastolze](https://github.com/anna-lenastolze)
 
 
 ## Acknowledgements
