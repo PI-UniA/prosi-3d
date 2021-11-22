@@ -11,17 +11,6 @@ from scipy.interpolate import interp1d
 
 class EosPreprocess():
 
-    ###################################################################
-    # Data
-    ###################################################################
-
-    data = R"C:\Users\ringel\Lokal\ProSi3D\Py\20210806_prosi3d-image-calibration_44x44.openjz.txt"
-    openjobfile = R"C:\Users\ringel\Lokal\ProSi3D\Py\20201204_Fehlerprovokation_Brose_bjr.openjob"
-    parfile = R"C:\Users\ringel\Lokal\ProSi3D\Py\par_Brose4IATP_val2.csv"
-
-    ###################################################################
-
-
     def readDf(eostxtfile):
         """
         Reads txt-File exported via EOSPRINTAPI from openjz.txt build-preview-file
@@ -33,7 +22,22 @@ class EosPreprocess():
         Args: eostxtfile
         Returns: df, layers
         """
+
+
+        ###################################################################
+        # Data
+        ###################################################################
+
+        global data, openjobfile, parfile
+
+        data = R"C:\Users\ringel\Lokal\ProSi3D\Py\20210806_prosi3d-image-calibration_44x44.openjz.txt"
+        openjobfile = R"C:\Users\ringel\Lokal\ProSi3D\Py\20201204_Fehlerprovokation_Brose_bjr.openjob"
+        parfile = R"C:\Users\ringel\Lokal\ProSi3D\Py\par_Brose4IATP_val2.csv"
+
+        ###################################################################
         
+
+
         df = pd.read_csv(eostxtfile, sep=',', header=None, error_bad_lines=False, warn_bad_lines=True, skiprows=4)
         
         ## re-define columnheader
