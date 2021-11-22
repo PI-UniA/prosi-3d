@@ -4,7 +4,8 @@ Created on Wed Sep  8 14:21:51 2021
 
 @author: ringel
 """
-
+from prosi3d.meta.eos.eosPreprocess import EosPreprocess
+from prosi3d.meta.eos.eosProcess import EosProcess
 
 def main(data):
     '''
@@ -16,10 +17,10 @@ def main(data):
     ## preprocess
     
     # save layerwise data
-    layCount = df2Layers_hdf(readDf(data))
+    layCount = EosPreprocess.df2Layers_hdf(EosPreprocess.readDf(data))
     
     # calculate and save timing
     # edit/check velocities in eos_preprocess line 331 "speeds" and line 358 ff. before
-    vecTiming_hdf(layCount)
+    eos_jump, eos_laser = EosPreprocess.vecTiming_hdf(layCount)
     
-    createTimeseries(layCount)
+    timeSeries = EosProcess.createTimeseries(layCount)
