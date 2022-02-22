@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import h5py as h5
 import sys
 from scipy.signal import find_peaks
+import math
 
 from prosi3d.meta.featureExtractor import FeatureExtractor
 from prosi3d.sensors.methodsCollection import MethodsCollections
@@ -113,3 +115,41 @@ class Recoater(FeatureExtractor):
         
         except:
             raise Exception("Fehler in der Methode plot_test der Klasse Accousticplatform. Fehlertyp: ", sys.exc_info()[0])
+
+
+
+    # Calculate the varianz
+    def _var_time (y):
+        return np.var(y)
+
+    # Find peaks over a boundary in frequency domain 
+    def _peaks_over_boundary_fre (yf):
+        # TODO: Boundary Wert muss noch angepasst werden
+        x = math.log10(2 * 1e-6)
+        array = [math.log10(i) > x for i in yf]
+        return sum(array)
+    
+    # Find peaks over a boundary in time domain 
+    def _peaks_over_boundary_time (y):
+        # TODO: Boundary Wert muss noch angepasst werden
+        x = math.log10(0.2)
+        array = [math.log10(i) > x for i in y]
+        return sum(array)
+
+
+    def get_feature(self):
+        """ Determine the sensor specific features as array [variance, peaks over a boundary xxx in the frequency domain, peaks over a boundary xxx in the time domain]. 
+            Call get_data and process before using this method otherwise this method throws a error.
+
+        Returns:
+            features (numpy.ndarray): Array with the sensor specific features. 
+        """
+
+        # zuvor: Vorverarbeitung der Sensordaten je Schicht über die Methoden get_data u. process und Herausschneiden der Spalte des Sensors "recoater"
+        var = Recoater._var_time (self.yt)
+        count_peaks_fre = Recoater._peaks_over_boundary_fre(self.yf)
+        count_peaks_time = Recoater._peaks_over_boundary_time(self.yt)
+
+        features = [var, count_peaks_fre, count_peaks_time]
+
+        return features

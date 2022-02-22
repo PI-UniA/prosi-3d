@@ -4,8 +4,10 @@ Subclass from Abstract Base Class featureExtractor that outputs features of the 
 
 import numpy as np
 import matplotlib.pyplot as plt
+import h5py as h5
 from scipy.signal import find_peaks
 import sys
+import math
 
 from prosi3d.meta.featureExtractor import FeatureExtractor
 from prosi3d.sensors.methodsCollection import MethodsCollections
@@ -117,6 +119,40 @@ class Accousticair(FeatureExtractor):
 
 
 
+
+    # Calculate the varianz 
+    def _var_time (y):
+        return np.var(y)
+
+    # Find peaks over a boundary in frequency domain 
+    def _peaks_over_boundary_fre (yf):
+        # TODO: Boundary Wert muss noch angepasst werden
+        x = math.log10(2 * 1e-6)
+        array = [math.log10(i) > x for i in yf]
+        return sum(array)
+
+    # Main component analyse 
+    def _main_component_PCA (y):
+        # TODO: Implementierung der Methode fehlt noch
+        pass
+
+
+    def get_feature(self):
+        """ Determine the sensor specific features as array [variance, peaks over a boundary xxx in the frequency domain, main components of the PCA]. 
+            Call get_data and process before using this method otherwise this method throws a error.
+
+        Returns:
+            features (numpy.ndarray): Array with the sensor specific features.
+        """
+
+        # zuvor: Vorverarbeitung der Sensordaten je Schicht über die Methoden get_data u. process und Herausschneiden der Spalte des Sensors "accousticair"
+        var = Accousticair._var_time (self.yt)
+        count_peaks_fre = Accousticair._peaks_over_boundary_fre(self.yf)
+        count_main_component_PCA = Accousticair._main_component_PCA(self.yf)
+
+        features = [var, count_peaks_fre, count_main_component_PCA]
+            
+        return features
 
 
 

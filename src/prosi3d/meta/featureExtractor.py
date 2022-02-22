@@ -33,8 +33,13 @@ class FeatureExtractor(Preprocessor):
     def _create_FFT(self):
         pass
     
-
     """ Extract the peaks in freqency domain """
     @abstractmethod
     def _find_peaks_values(self):
+        pass
+
+
+    """ Get the features as array """
+    @abstractmethod
+    def get_feature(self, hdf):
         pass
