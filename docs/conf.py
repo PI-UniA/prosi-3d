@@ -93,8 +93,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "prosi3d"
-copyright = "2021, zimbropa"
+project = "ProSi-3D"
+copyright = "2021, Patrick Zimbrod"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
