@@ -55,14 +55,9 @@ class Accousticplatform(FeatureExtractor):
 
     
     def write(self):
-<<<<<<< HEAD
         """
         Print the x-values and the y-values of the peaks which are saved in to numpy arrays.
         """
-=======
-        """ Print the conspicuous peaks which are detected in the method Accousticair.process(). The frequency and the power spectral density are saved in numpy arrays. """
->>>>>>> e3c7c1367fc24b0d9bac8d0f0456a5d344da7e21
-
         print("x-Werte Peaks: ", self.peaks_x)
         print("y-Werte Peaks: ", self.peaks_y)
 
