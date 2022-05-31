@@ -2,7 +2,7 @@ from prosi3d.sensors.acousticair import Accousticair
 from prosi3d.sensors.acousticplatform import Accousticplatform
 from prosi3d.sensors.recoater import Recoater
 
-hdf_name = '/Users/anna-lenasto/Downloads/4ch_20210428a.h5'
+hdf_name = 'data/ch4raw_00593.h5'
 
 acc = Accousticair()
 acc.get_data(hdf_name)
