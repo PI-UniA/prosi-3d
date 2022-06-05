@@ -25,12 +25,6 @@ def vectorGraph(path, layer, ub=0, lb=0, corr=0):
     Args: layer, path, ub=0, lb=0, corr=0
     Returns: <chart>
     '''
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
-    # logger = logging.getLogger(inspect.currentframe().f_code.co_name)
-    # out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
-    # logger.info(out)
-
-    # avoid errors by false arguments
     corr = int(corr)
     if lb > ub:
         print("lower boundary value (lb) must be smaller then upper boundary value (ub). Values are flipped.")
@@ -53,8 +47,6 @@ def vectorGraph(path, layer, ub=0, lb=0, corr=0):
     # find first ttl-value greater 1 which equals first laser-on
     laser_on = dg.ttl[(dg.ttl >= 1)].index[0] - dg.index[0]
 
-    # change time-column to seconds
-    # dg['time'] = pd.to_timedelta(dg['time'])
     if dg['time'].dtype != 'float64':
         dg['time'] = dg['time'].values.astype('datetime64[ns]')
     dg['time'] = dg.time - (dg.time.iloc[laser_on])
@@ -71,11 +63,9 @@ def vectorGraph(path, layer, ub=0, lb=0, corr=0):
     # set up figure
     plt.figure(figsize=(18, 6))
     ax = plt.axes()
-    # plt.xlim(0, df.iloc[-1,1])
     plt.ylim(-4, 5)
     plt.plot
-    # plt.ylim(-0.2, 1.2)
-    # iterate all lines and draw arrows (same procedure like in pfeile() for scanvector vizualisation)
+    # iterate all lines and draw arrows (same procedure like in genVectors() for scanvector vizualisation)
     start = round(lb / 100 * len(df))
     stop = round(ub / 100 * len(df))
     for i, row in df.iterrows():
@@ -99,7 +89,6 @@ def vectorGraph(path, layer, ub=0, lb=0, corr=0):
             ax.arrow(*vec, width=0.000001, head_width=0.0, head_length=0.0, color='grey')
             # end with last pair
         if i + 1 == len(df) - 2:
-            # if i + 1 == 200:
             break
         if ub != 0:
             if i == stop:
@@ -128,10 +117,9 @@ def eosprintInfo(path, layer, vers=1):
     Note that contours in EOSPRINT API 2.8 exports (eosprint_layer) are defined wrong as infill (2), which is corrected in eoslaserpath.
 
     Args: layer, vers=1
-    Retruns: print(df.groupby('exposureType').count())
+    Returns: 1
     '''
 
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -143,6 +131,7 @@ def eosprintInfo(path, layer, vers=1):
         f = vecdir + '\\' + "eoslaserpath_" + str(layer).zfill(5) + ".h5"
     df = pd.read_hdf(f, 'df')
     logger.info(df.groupby('exposureType').count())
+    return 1
 
 def plotTTL(path, layer, ub=0, lb=0, corr=0):
     '''
@@ -159,10 +148,6 @@ def plotTTL(path, layer, ub=0, lb=0, corr=0):
     Args: layer, path, ub=0, lb=0, corr=0
     Returns: <chart>
     '''
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
-    # logger = logging.getLogger(inspect.currentframe().f_code.co_name)
-    # out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
-    # logger.info(out)
 
     # avoid errors by false arguments
     corr = int(corr)
@@ -186,20 +171,14 @@ def plotTTL(path, layer, ub=0, lb=0, corr=0):
     laser_on = dg.ttl[(dg.ttl >= 1)].index[0] - dg.index[0]
 
     # change time-column to seconds
-    # dg['time'] = pd.to_timedelta(dg['time'])
     if dg['time'].dtype != 'float64':
         dg['time'] = dg['time'].values.astype('datetime64[ns]')
     dg['time'] = dg.time - (dg.time.iloc[laser_on])
     if dg['time'].dtype != 'float64':
         dg['time'] = dg.time.dt.total_seconds()
 
-    # drop lines before first laser on / recoating
-    # dg = dg[laser_on:-1]
-    # reset index for correct iloc later
-    # df = df.reset_index(drop=True)
     # set up figure
     plt.figure(figsize=(18, 6))
-    ax = plt.axes()
     # plt.xlim(0, df.iloc[-1,1])
     plt.ylim(-4, 5)
     plt.plot
@@ -221,18 +200,20 @@ def plotTTL(path, layer, ub=0, lb=0, corr=0):
         plt.plot(dg.time, dg.ttl)  # , linewidth=0.1)
     plt.tight_layout()
 
-def loopPfeile(path, mode=2):
+def loopVectors(path, mode=0):
     '''
-    Batch processing for pfeile()
+    Batch processing for genVectors()
     start loop with either single layer number
-    calls pfeile()
+    calls genVectors()
+    saves graphical representation as pdf files
     mode=1: only eosprint_layer
     mode=2: only eoslaserpath
     mode=0: both
 
     Args: path, mode=0
-    Returns: <saved pdf files>
+    Returns: 1
     '''
+
     _, _, _, vecdir, _, _, _ = prosi3d.eos.vector.folder2Files(path, 0)
 
     pdfdir = path + '\\pdf'
@@ -268,12 +249,15 @@ def loopPfeile(path, mode=2):
 
     for item in tqdm(eoslayers):
         try:
-            pfeile(item, pdf=1)
+            genVectors(item, pdf=1)
         except:
-            print(f"ERROR in loopPfeile: {item} could not be processed. Check manually!")
+            print(f"ERROR in loopVectors: {item} could not be processed. Check manually!")
         lay += 1
 
-def pfeile(lay, path=0, pdf=0, color_vector=0, jumps=0):
+    return 1
+
+
+def genVectors(lay, path=0, pdf=0, color_vector=0, jumps=0):
     '''
     generates graphical representation of eosprint makro scan vectors either via qt5 or saved as pdf (pdf=1 saves pdf instead of qt5 inline plot)
     jumps = 1 swaps order to show jumps
@@ -282,7 +266,7 @@ def pfeile(lay, path=0, pdf=0, color_vector=0, jumps=0):
     give it a layer number and project path or give it a filepath
 
     Args: lay,path=0,pdf=0,color_vector=0,jumps=0
-    Returns: <none>
+    Returns: 1
     '''
 
     if pdf == 0:
@@ -309,8 +293,6 @@ def pfeile(lay, path=0, pdf=0, color_vector=0, jumps=0):
     df = pd.read_hdf(f, 'df')
 
     df.reset_index(drop=True, inplace=True)
-    # print(df.head(4))
-    # print(df.tail(4))
 
     # size definition for plotting in inches
     plt.figure(figsize=(96, 96))
@@ -342,32 +324,26 @@ def pfeile(lay, path=0, pdf=0, color_vector=0, jumps=0):
             j = i + 1
             vec = [df.iloc[i, 0], df.iloc[i, 1], df.iloc[j, 0] - df.iloc[i, 0], df.iloc[j, 1] - df.iloc[i, 1]]
             ax.arrow(*vec, head_width=0.05, head_length=0.1, color=col)
-        # plt.quiver(*vec)
-        # print(vec)
         if i + 1 == len(df) - 1:
             break
-    # print('Count of vectorpairs:')
-    # print(df.groupby('exposureType').count())
-    # plt.show()
-    # time.sleep(180)
     if pdf == 1:
         # without file ending
         fname = f.rsplit('.', 1)[0]
         # other folder
         fname = fname.replace('\\vec\\', '\\pdf\\')
         plt.savefig(fname + '.pdf', format='pdf', dpi=600)
-        # plt.savefig(f[0:19] + '_2.svg', format='svg')
-        # plt.savefig(f[0:19] + '.png', dpi=50)
         plt.close()
         del (df)
         matplotlib.use('Qt5Agg')
+    return 1
 
 def setColor(expType):
     '''
     defines colors regarding eos exposureType number.
-    called by function pfeile().
+    called by function genVectors().
 
     Args: expType
+    Returns: Color according to expType or black Color if the expType is invalid
     '''
     switch = {
         # hatch

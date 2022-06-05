@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 
 
 def unwarpProj(img, fname, imgpoints, scale=1):
+    '''
+    Unwarps the image through rotation, flipping, Matrix Transformation (M) and saves it as a file.
+
+    Args: img <Array>, fname <String>, imgpoints <ArrayofArrays>, scale=1 <float>
+    Returns: flipped, fout <Boolean>, M <Array>
+    '''
     # shape (px)
     h, w = img.shape[:2]
 
@@ -54,6 +60,12 @@ def unwarpProj(img, fname, imgpoints, scale=1):
 
 
 def chessCorners(img, fname, x=43, y=43):
+    '''
+    Retrieves from an image with a chessboard in it the object- and imagepoints.
+
+    Args: img <Array>, fname <String>, x=43 <int>, y=43 <int>
+    Returns: (gray <Array>, objpoints <ArrayofArrays>, imgpoints<ArrayofArrays>) or 0 if no corners were found
+    '''
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((x * y, 3), np.float32)
@@ -85,17 +97,24 @@ def chessCorners(img, fname, x=43, y=43):
         df_corners.to_hdf(f, key='df', mode='w')
         imgpoints.append(corners)
         # Draw and display the corners
-        # cv2.drawChessboardCorners(img, (x,y), corners2, ret)
+
         cv2.drawChessboardCorners(img, (x, y), corners2, ret)
         f = fname[:pos] + '_corners.tif'
         cv2.imwrite(f, img)
         return gray, objpoints, imgpoints
     else:
-        print(f'No cornes could be found. Check preprocessing of input image.')
+        print(f'No corners could be found. Check preprocessing of input image.')
+        return 0
 
 
 def undistort(img, fname, objpoints, imgpoints, scale=1):
-    # objpoints = objpoints*scale
+    '''
+    Obtains the intrinsic Camera Matrix and distortion coefficients.
+    Transforms image to compensate for lens distortion and saves the new image in a file.
+
+    Args: img <Array>, fname <String>, objpoints <ArrayOfArrays>, imgpoints <ArrayOfArrays>, scale=1 <float>
+    Returns: undist <Array>, fout <Boolean>, cameraMatrix <Array>, distCoeffs <Array>
+    '''
     if scale != 1:
         imgpoints[0] = imgpoints[0] * scale
     if img.ndim == 3:

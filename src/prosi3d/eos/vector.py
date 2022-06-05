@@ -20,7 +20,6 @@ def folder2Files(path, stdprnt=1):
     """
 
     files = [f.path for f in os.scandir(path)]
-    # list_subfolders_with_paths = [f.path for f in os.scandir(path) if f.is_dir()]
     for fname in files:
         if fname[-11:] == '.openjz.txt':
             eostxtfile = fname
@@ -142,13 +141,10 @@ def df2Layers_hdf(df, layers, vecdir):
     Returns: >saves layerwise eosprint-vector-data in hdf5 file format: e.g.:eosprint_layer00001.h5<
     """
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
-    # logger.info('>>>>>>>>>> ', inspect.currentframe().f_code.co_name)#, inspect.getargvalues(inspect.currentframe()).locals)
     out = '>>>>>>>>>> ' + str(inspect.currentframe().f_code.co_name)
     logger.info(out)
 
-    # following does not make sense for arrays -> full list
-    # logger.info(inspect.getargvalues(inspect.currentframe()).locals)
-
+    # TODO(filip.packan@gmail.com): More efficient method.
     # make numbers - a lot of cpu time necessary
     df['x_mm'] = pd.to_numeric(df['x_mm'], downcast='float')
     df['y_mm'] = pd.to_numeric(df['y_mm'], downcast='float')
@@ -182,24 +178,20 @@ def jumpAcceleration(dis, lin=0):
     lin=0: log regression of measured values
     lin=1: linear regression values
 
-    Args: dis, lin=0
+    Args: dis <Pandas Series>, lin=0
     Returns: mean_jump_speed
     '''
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.currentframe().f_code.co_name)
     logger.info(out)
 
-    # logger.info(inspect.getargvalues(inspect.currentframe()).locals)
 
     # damit log(<1) nicht negativ
-    # da = dis*1000
     if lin == 0:
         da = dis * 1000
     else:
         da = dis
-    # x = distance; y = measured mean speed
-    # v_mean = -0.0001*np.power(dis, 4) + 0.0437*np.power(dis, 3) - 5.6237*np.power(dis, 2) + 273.54*dis + 513.48
-    da = da.to_frame().copy()
+    da = da.to_frame()
     da['v_mean'] = 1
     da['time'] = 2
     da.columns = ['dis', 'v_mean', 'time']
@@ -208,8 +200,6 @@ def jumpAcceleration(dis, lin=0):
         # 737075ln(x) - 4E+06 | alle R2=0,8671
         # speeds below welding speeds dont make sense
         korr = 170000
-        # da.v_mean.loc[da.dis > 1230] = 800000*np.log(da.dis) - 4E+06
-        # da.v_mean.loc[da.dis < 1230] = 1600000 - 120000
         da.v_mean.loc[da.dis > 1230] = 787181 * np.log(da.dis.copy()) - 4E+06
         da.v_mean.loc[da.dis < 1230] = 1600000 - 120000
         da.v_mean = da.v_mean / 1000
@@ -223,7 +213,6 @@ def jumpAcceleration(dis, lin=0):
         interpol = interp1d(dbase_sort.dis_eos, dbase_sort.v_mean, bounds_error=False)
         da['v_mean'] = interpol(da.dis)
 
-        # target.time_ttl.loc[target.time_ttl.isna()] = target_init.time_ttl.loc[target.time_ttl.isna()]
     if lin == 2:
         da.time = 0.0002 * da.dis + 0.0008
         da.v_mean = da.dis / da.time
@@ -232,8 +221,7 @@ def jumpAcceleration(dis, lin=0):
     da.v_mean.loc[da.v_mean == 0] = 0
 
     # global jumpAccs
-    mean_jump_speed = da.v_mean.copy()
-    return mean_jump_speed
+    return da.v_mean
 
 def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
     '''
@@ -256,7 +244,6 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
     Args: path, lay=1,debug=0,readonly=0, changeExposure=1
     Returns: >saves files< "eoslaserpath_00001.h5", except: debug modes give values back
     '''
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     # set logger with function name
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     # log output function and arguments
@@ -317,7 +304,6 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
             # create index list for where length of jump is zero and exposuretype is 2, then change to 5. without entries with NaN (last row)
             ind4Change = df.loc[
                 (df.dis == 0) & (df.exposureType == 2) & (df.dx.isna() == False) & (df.dy.isna() == False)].index
-            # ind4Change = df.loc[((np.abs(round(df.dphi,0))==90) | (np.abs(round(df.dphi,0))==270)) & (df.dis == 0) & (df.exposureType == 2)].index
 
             # change exposureType for found jumps with length zero (actual vector pair and following pair)
             df.loc[(ind4Change - 1 | ind4Change | ind4Change + 1 | ind4Change + 2), 'exposureType'] = 5
@@ -325,7 +311,6 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
             logger.info(f'Changed exposures in n pairs: {len(ind4Change)}')
 
         # assign speeds regarding partId and exposureType
-        # df['v'] = speedFromCSV(df[['exposureType','partId']])
         parts = df['partId'].unique()
         for part in parts:
             # select all exposures for this partid
@@ -359,10 +344,7 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
         ## Skywriting corrections turned of because precise correction is done in another function "redefinelaserpathstarts()"
         # add timeconstant for skywriting if oneeightee
         # k_skywriting-offset around 0.00050 combined with logarithmic speed regression
-        # t_skywriting = 0.000475
-        # df.loc[(np.abs(df.dphi) < 181) & (np.abs(df.dphi) > 179) & (df.dis !=0), 'time'] = df.loc[(np.abs(df.dphi) < 181) & (np.abs(df.dphi) > 179) & (df.dis !=0), 'time'] + t_skywriting
         # may there is an additional distance rule necessary: skywriting only if endpoint is near/next to starting point
-        # df.loc[(np.abs(df.dphi) < 181) & (np.abs(df.dphi) > 179) & (df.dis < 1) & (df.dis != 0), 'time'] = df.loc[(np.abs(df.dphi) < 181) & (np.abs(df.dphi) > 179) & (df.dis < 1) & (df.dis != 0), 'time'] + 0.46
 
         # cumulative sum of time -> timerow like timestamps
         df['cum_sum'] = df['time'].cumsum()
@@ -379,14 +361,11 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
         df_laser['cum_sum'] = df_laser['time'].cumsum()
         df_jump['cum_sum'] = df_jump['time'].cumsum()
 
-        # logger.info(f"(df_laser.dis == 0).sum() = {(df_laser.dis == 0).sum()}")
         if readonly == 0:
             f = vecdir + '\\' + "eoslaserpath_" + fname[-8:]
             df[['x_mm', 'y_mm', 'exposureType', 'partId', 'v', 'dis', 'angle', 'dphi', 'time', 'cum_sum']].to_hdf(f,
                                                                                                                   key='df',
                                                                                                                   mode='w')
-            # f = vecdir + '\\' + "vectortimes" + fname[-14:]
-            # df[['time','cum-sum','dis','angle', 'dphi']].to_hdf(f, key='df', mode='w')
             logger.info(fname + ' gespeichert.')
 
     # why is laser and jump 0 1 flipped in debug mode?
@@ -414,10 +393,8 @@ def listpar(path):
     helper function to create csv with all occuring parameter names to then add DOE values manually to this file before calling vecTiming_hdf()
 
     Args: path
-    Returns: <save empty parameter file with partnumbers (partId = partnumber+1) and assigned parameter names>
+    Returns: paramlist, partlist
     '''
-
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -452,7 +429,7 @@ def listpar(path):
     parlist = pd.DataFrame(paramlist)
     parlist.to_csv(jobfile[:-8] + '_param.csv', sep=';')
     logger.info(f'Parametersets: {len(paramlist)}, Teileanzahl: {len(partlist)}')
-    #    return paramlist, partlist
+    return paramlist, partlist
 
 def loopRedefinelaserpaths(path, correction=0):
     '''
@@ -462,7 +439,6 @@ def loopRedefinelaserpaths(path, correction=0):
     Args: path, correction=0
     Returns: matches
     '''
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -549,7 +525,6 @@ def chkLossMove(eos_laser_single, jmp_strt_lsr_len, errIndex, chk_time_ms, chk_l
     ## recalculate losses
     eos_laser_single_drop = getLoss(eos_laser_single_drop, jmp_strt_lsr_len)
     # get new problematic position
-    # loss_viol_move = eos_laser_single_drop.loc[(eos_laser_single_drop['time'] > chk_time_ms) & (abs(eos_laser_single_drop['loss']) > chk_loss) & (eos_laser_single_drop.index > swelds_io_idx)].index[0]
     lossfilter = eos_laser_single_drop.loc[
         (eos_laser_single_drop['time'] > chk_time_ms) & (abs(eos_laser_single_drop['loss']) > chk_loss)]
     if lossfilter.shape[0] > 0:
@@ -633,13 +608,11 @@ def redefinelaserpathstarts(path, lay, correction=0):
     # ttl_laser has jump starting times in cum-sum
     # ttl_laser has len of laser sequences in diff_ms
 
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
 
     # read ttl data
-    # ttl_laser, ttl_jump = tJumpTTL(lay+correction)
     jmp_strt_lsr_len, lsr_strt_jmp_len = tJumpTTL(lay + correction)
     # read eos data
     _, _, _, vecdir, _, _, logdir = folder2Files(path, 0)
@@ -659,7 +632,6 @@ def redefinelaserpathstarts(path, lay, correction=0):
         uneven = False
     logger.info(f"Row count in eos uneven: {uneven}; length of eos: {len(eos)}")
 
-    ##
     eos_laser['cusu_onettl'] = 0
 
     ## zerojumps are not measurable in ttl. assemble eos weldpaths with zerojumps inside to single one to make welds in general look like measured welds
@@ -1012,9 +984,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
 
     eoscopy = eos.copy()
     fdrops = f[:-3] + '_eosdrops.txt'
-    drops = eoscopy.loc[errIndList, :].copy()
-    drops.to_csv(fdrops)
-    # logger.info(f"time of dropped weld vectors: max {drops['time'].max()}, min {drops['time'].min()}, mean {drops['time'].mean()}, median {drops['time'].median()}, count {drops.shape[0]}")
+    eoscopy.loc[errIndList, :].to_csv(fdrops)
 
     # apply changes in eos dataset
     # zero jump if missing jump was found
@@ -1140,12 +1110,10 @@ def tJumpTTL(path, layer, sampling_ms=0.02):
     Args: layer,sampling_ms=0.02
     Returns: jmp_strt_lsr_len, lsr_strt_jmp_len
     '''
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
 
-    # ttldir= R"C:\Users\ringel\Lokal\Python-local\ProSi3D\brosev2_19112021\4ch_raw"
     eostxtfile, paramfile, jobfile, vecdir, ttldir, resdir, logdir = folder2Files(path, 0)
 
     f = ttldir + "\\ch4raw_" + str(layer).zfill(5) + ".h5"
@@ -1207,9 +1175,6 @@ def tJumpTTL(path, layer, sampling_ms=0.02):
 
     # if difference between indices greater 1 then laser was off for that time
     lsr_strt_jmp_len = df_laser.loc[df_laser['diff_idx'] > min_len_idx].copy()
-
-    # lsr_strt_jmp_len['diff_ms'] = lsr_strt_jmp_len['diff_idx'].multiply(sampling_ms)
-    # jmp_strt_lsr_len['diff_ms'] = jmp_strt_lsr_len['diff_idx'].multiply(sampling_ms)
 
     lsr_strt_jmp_len['prev_idx'] = lsr_strt_jmp_len.index - lsr_strt_jmp_len['diff_idx']
     lsr_strt_jmp_len['diff_ms'] = (lsr_strt_jmp_len['time'] - df.loc[
@@ -1280,7 +1245,7 @@ def lab2hdf_4ch(path):
     Calls folder2Files to get ttldir in project path and collects all txt files by calling filesInfolder() from ttldir.
 
     Args: path
-    Returns: <saved h5 files>
+    Returns: 1
     '''
 
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
@@ -1289,10 +1254,8 @@ def lab2hdf_4ch(path):
 
     eostxtfile, paramfile, jobfile, vecdir, ttldir, resdir, logdir = folder2Files(path, 0)
 
-    # files = [f.path for f in os.scandir(ttldir)]
     files = filesInFolder(ttldir, typ='txt')
 
-    # print('1,3 Gbyte equal around 10 Mio lines.')
     # iterate all files by line in fopen object is less memory-expensive then read_csv. files can have billions of rows.
     n = 1
     for fname in tqdm(files):
@@ -1313,23 +1276,13 @@ def lab2hdf_4ch(path):
                     val[1:] = list(map(float, val[1:]))
                     df.append(val)
         f.close()
-        # logger.info('List complete. Changing to DataFrame ...')
         df = pd.DataFrame(df)
         df.columns = ['time', 'lse', 'ttl', 'kse_bp', 'kse_rec']
-        # logger.info('DataFrame done. Changing string to timedelta ...')
 
-        # df['time'] = pd.to_datetime(df['time'])
         df['time'] = pd.to_timedelta(df['time'])
-        # logger.info('Timedelta done. Changing to total seconds ...')
         # start time with zero in every layer and convert by this to seconds
         df['time'] = df['time'] - df['time'].iloc[0]
         df['time'] = df['time'].dt.total_seconds()
-        # logger.info(df.iloc[:,0].dtype)
-
-        # df.iloc[:,0] = df.iloc[:,0].values.astype('datetime64[ns]')
-        # df.iloc[:,0] = df.iloc[:,0].map(lambda x: x.total_seconds())
-
-        # logger.info('Formatting done. Write hdf5 ...')
 
         # if daychange within one layer then add 24 hours
         tmin = df['time'].min()
@@ -1346,10 +1299,8 @@ def lab2hdf_4ch(path):
         layer = fname[a + 4:b]
         name = ttldir + '\\' + 'ch4raw_' + str(layer).zfill(5) + '.h5'
         df.to_hdf(name, key='df', mode='w')
-        out = 'Layer: ' + layer + ' saved as hdf5.'
-        # logger.info(out)
         n += 1
-
+    return 1
 
 
 
@@ -1361,9 +1312,8 @@ def loopApplyEos2TTL(path, truelayers, correction=0):
     too, to get correct truelayers-list.
 
     Args: path, truelayers, correction=0
-    Returns: <applyEos2TTL saves xy-time-file>
+    Returns: 1
     '''
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -1374,15 +1324,15 @@ def loopApplyEos2TTL(path, truelayers, correction=0):
         except:
             logger.info(f"ERROR: {lay} could not be processed. Check manually!")
             pass
+    return 1
 
 def applyEos2TTL(path, lay, correction=0):
     '''
     Apply xy-coordinates to resultfile based on acoustic/ttl measurement data ch4raw
 
     Args: path, lay, correction=0
-    Returns: <saved xytime result files>
+    Returns: 1
     '''
-    # print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -1392,7 +1342,6 @@ def applyEos2TTL(path, lay, correction=0):
     f = ttldir + "\\ch4raw_" + str(lay + correction).zfill(5) + ".h5"
     ttl = pd.read_hdf(f, 'df')
     ttl.columns = ['time', 'lse', 'ttl', 'kse_bp', 'kse_rec']
-    # firstindex = ttl.time.index[0]
     tresh1 = 1
     laser_on = ttl.ttl[(ttl.ttl >= tresh1)].index[0]
     # via cumsum in eospathfile und start des lasers im ttl eine neue zeitspalte auffüllen
@@ -1400,7 +1349,6 @@ def applyEos2TTL(path, lay, correction=0):
 
     f = vecdir + '\\' + "eoslaserpath_" + str(lay).zfill(5) + ".h5"
     eos = pd.read_hdf(f)
-    # eostime = eos['cum_sum']
 
     # mark first point of weldtuple with True
     eos['weld'] = 0
@@ -1452,53 +1400,8 @@ def applyEos2TTL(path, lay, correction=0):
     fout = resdir + "\\eosxytime_" + str(lay).zfill(5) + ".h5"
     df.to_hdf(fout, key='df', mode='w')  # , complevel=9)
 
-    # return df, eos, ttl
 
 
-def workflow(path, correction):
-    '''
-
-
-
-    '''
-    #correction = 0
-
-    # convert eos txt file to h5 layerwise data
-    df, layers, vecdir = readDf(path)
-    df2Layers_hdf(df, layers, vecdir)
-
-    # calculate and save timings to first version of eoslaserpath_#####
-    # vecTiming_hdf(path, lay=1, debug=0, readonly=0, changeExposure=1)
-    vecTiming_hdf(path)
-
-    # convert acoustic measurement files to h5
-    lab2hdf_4ch(path)
-
-    # match weldvectors to ttl signal. use correction offset if ttl and eos files are count different
-    path = path + R'\brosev2_19112021'
-    truelayers = loopRedefinelaserpaths(path, correction)
-    # redefinelaserpathstarts(4, 0)
-
-    # apply x,y coordinates to timesignal
-    loopApplyEos2TTL(path, [4], correction)
-    # loopApplyEos2TTL(path, truelayers, correction)
-    # single layer:
-    # applyEos2TTL(path, 270)
-
-    # create pdf files for visualization of welds
-    prosi3d.eos.visualization.loopPfeile(path)
-    # pfeile(R'C:\Users\ringel\Lokal\Python-local\Fabian_26012022\vec\eoslaserpath_00268.h5', pdf=1)
-    # single pdf:
-    # pfeile(270,path,pdf=1)
-
-    # eosprintInfo(4)
-    # create time chart with measured and calculated vectors
-    prosi3d.eos.visualization.vectorGraph(4, path, 100, 99.5, corr=0)
-
-    # plot ttl signal for one layer
-    prosi3d.eos.visualization.plotTTL(270, path)
-
-    prosi3d.eos.visualization.eosprintInfo(268)
 
 
 
