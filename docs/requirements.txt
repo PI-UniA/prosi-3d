@@ -7,6 +7,9 @@ keras
 h5py
 numpy
 matplotlib
+pandas
+cv2
+tqdm
 scipy
 pytest
 autopep8
