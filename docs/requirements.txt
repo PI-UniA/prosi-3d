@@ -8,7 +8,7 @@ h5py
 numpy
 matplotlib
 pandas
-cv2
+opencv-python
 tqdm
 scipy
 pytest
