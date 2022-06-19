@@ -15,8 +15,20 @@ def folder2Files(path, stdprnt=1):
     """
     Use path as dir to project. Put inside *openjz.txt file, *.openjobfile and *_param.csv
     This functions helps to organize files in projectfolder by file-type
-    Args: filepath
-    Returns: eostxtfile, paramfile, jobfile, vecdir
+
+    Args:
+        path (str): Path of the input hdf5 files directory
+        stdprnt (int, optional): Decides if eostxtfiles,paramfile and jobfile will be printed in the console, defaults to 1
+    Returns:
+        tuple containing
+
+        - **eostxtfile** (*str*) – Eostxt filename, returns False if not defined
+        - **paramfile** (*str*) – Param filename, returns False if not defined
+        - **jobfile** (*str*) – Job filename, returns False if not defined
+        - **vecdir** (*str*) – Vector directory path
+        - **ttldir** (*str*) – TTL directory path
+        - **resdir** (*str*) – Res directory path
+        - **logdir** (*str*) – Log directory path
     """
 
     files = [f.path for f in os.scandir(path)]
@@ -84,13 +96,16 @@ def folder2Files(path, stdprnt=1):
 
 def readDf(path):
     """
-    Reads txt-File exported via EOSPRINTAPI from *openjz.txt build-preview-file. Deletes non numeric numbers and calculates layerchanges.
-    returns df: array with vector-tuple in rows and columns: x_mm, y_mm, exposureType, partId
-    returns layers: list of layerchangelineindexes starting with change from 1 to 2
-    returns vecdir where eosprint_layer files are stored via function df2layers
+    Reads txt-File exported via EOSPRINTAPI from *openjz.txt build-preview-file. Deletes non-numeric numbers and calculates layerchanges.
 
-    Args: eostxtfilepath
-    Returns: df, layers, vecdir
+    Args:
+        path (str): Path of the input hdf5 files directory
+    Returns:
+        tuple containing
+
+        - **df** (*Array*) – Array with vector-tuple in rows and columns: x_mm, y_mm, exposureType, partId
+        - **layers** (*Array*) – Array of layerchangelineindexes starting with change from 1 to 2
+        - **vecdir** (*str*) – Vector directory path
     """
     print('>>>>>>>>>> ', inspect.currentframe().f_code.co_name, inspect.getargvalues(inspect.currentframe()).locals)
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
@@ -101,7 +116,7 @@ def readDf(path):
 
     df = pd.read_csv(eostxtfile, sep=',', header=None, error_bad_lines=False, warn_bad_lines=True, skiprows=4)
 
-    ## re-define columnheader
+    # re-define columnheader
     df.columns = ['x_mm', 'y_mm', 'exposureType', 'partId']
 
     # Delete non numeric letters in data
@@ -121,7 +136,7 @@ def readDf(path):
     layers = layers.drop(['y_mm', 'exposureType', 'partId'], axis='columns')
     layers.columns = ['Layer']
 
-    ## Delete lines were new layer starts and reset index numbering
+    # Delete lines were new layer starts and reset index numbering
     df = df.drop(layers.index, axis=0)
     df = df.reset_index(drop=True)
 
@@ -136,9 +151,14 @@ def df2Layers_hdf(df, layers, vecdir):
     """
     Follows function readDf(). slice and save dataframe into layerwise hdf5-files with columns: x_mm, y_mm, exposureType, partId
     Indexes from original dataframe are used -> first index of layer n>1 is not 0
+    Saves layerwise eosprint-vector-data in hdf5 file format: e.g.:eosprint_layer00001.h5
 
-    Args: df, layers, vecdir
-    Returns: >saves layerwise eosprint-vector-data in hdf5 file format: e.g.:eosprint_layer00001.h5<
+    Args:
+        df (Array): Array with vector-tuple in rows and columns: x_mm, y_mm, exposureType, partId
+        layers (Array): Array of layerchangelineindexes starting with change from 1 to 2
+        vecdir (str): Vector directory path
+    Returns:
+        vecdir (str): Vector directory path
     """
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.currentframe().f_code.co_name)
@@ -162,7 +182,7 @@ def df2Layers_hdf(df, layers, vecdir):
         f = vecdir + '\\' + "eosprint_layer" + str(lay).zfill(5) + ".h5"
         ii = i - (lay - 1)
         df[j:ii].to_hdf(f, key='df', mode='w')
-        # logger.info(f + ' von ' + size + ' Schichten gespeichert.')
+        # logger.info(f + ' of ' + size + ' layers saved.')
         j = ii
         lay += 1
     f = vecdir + '\\' + "eosprint_layer" + str(lay).zfill(5) + ".h5"
@@ -173,20 +193,21 @@ def df2Layers_hdf(df, layers, vecdir):
     return vecdir
 
 def jumpAcceleration(dis, lin=0):
-    '''
-    Called by vecTiming_hdf(). Calculates mean jump speed for jumptimecalculation based on
-    lin=0: log regression of measured values
-    lin=1: linear regression values
+    """
+    Called by vecTiming_hdf(). Calculates mean jump speed for jumptimecalculation based on lin
 
-    Args: dis <Pandas Series>, lin=0
-    Returns: mean_jump_speed
-    '''
+    Args:
+        dis (Pandas.Series): Series of distance , mean velocity and time
+        lin (int): Decides which regression will be used, lin=0: log regression of measured values, lin=1: linear regression values , defaults to 0
+    Returns:
+        mean_jump_speed (Pandas.Series): Mean jump speed
+    """
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.currentframe().f_code.co_name)
     logger.info(out)
 
 
-    # damit log(<1) nicht negativ
+    # to make sure log(<1) is not negativ
     if lin == 0:
         da = dis * 1000
     else:
@@ -223,13 +244,14 @@ def jumpAcceleration(dis, lin=0):
     # global jumpAccs
     return da.v_mean
 
-def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
-    '''
+def vecTiming_hdf( path, debug=0, readonly=0, changeExposure=1):
+    """
     Layerwise dataframe must be in file-name-format: eosprint_layer00001.h5 in path/vec
     Calculates time for each x,y point in df regarding laser speeds from _param.csv and forecasted jump speeds.
     Saves edit to files with format: eoslaserpath_00001.h5
-    Needings: edited *_param.csv, eosprint_layer00001.h5-files, jumpAcceleration()
+    Needing: edited *_param.csv, eosprint_layer00001.h5-files, jumpAcceleration()
     debug = 1 makes eos_jump, eos_laser global variables, debug = 2 returns eos_jump, eos_laser, readonly=1 does not save.
+    >saves files< "eoslaserpath_00001.h5", except: debug modes give values back
 
     some slice error is still present after calling jumpAcceleration()
 
@@ -241,9 +263,21 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
     A value is trying to be set on a copy of a slice from a DataFrame
 
 
-    Args: path, lay=1,debug=0,readonly=0, changeExposure=1
-    Returns: >saves files< "eoslaserpath_00001.h5", except: debug modes give values back
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        debug (int, optional): Activates debug mode ,=1 makes eos_jump, eos_laser global variables or =2 returns eos_jump, eos_laser, defaults to 0
+        readonly (int, optional): If =1 no files will be saved , defaults to 0
+        changeExposure (int, optional): Decides if Exposure type of found jumps will be changed, defaults to 1
+    Returns:
+        If debug != 2
+
+        - 1
+
+        If debug = 2
+
+        - **eos_jump** (*Array*) – jump of eos
+        - **eos_laser** (*Array*) – eos laser
+    """
     # set logger with function name
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     # log output function and arguments
@@ -318,8 +352,8 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
             for exptype in exp_types:
                 speedval = param.loc[(param['partid'] == part), str(exptype)]
                 df.loc[(df['exposureType'] == exptype) & (df['partId'] == part), 'v'] = speedval.iloc[0]
-        ### from here welding speeds are assigned to parts and exposureTypes correctly
-        ### following jump speeds are corrected
+        # from here welding speeds are assigned to parts and exposureTypes correctly
+        # following jump speeds are corrected
 
         # overwrite jump speeds between vector pairs (alternating from vector pairs)
         # odd line number count: vector pairs start from 2nd+3rd entry. first koordinate tuple is ignored. maybe laser initialization.
@@ -341,7 +375,7 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
         else:
             df.time.loc[(df.time < 0.000504) & ((df.index) % 2 == 1) & (df.dis != 0)] = 0.000504
 
-        ## Skywriting corrections turned of because precise correction is done in another function "redefinelaserpathstarts()"
+        # Skywriting corrections turned of because precise correction is done in another function "redefinelaserpathstarts()"
         # add timeconstant for skywriting if oneeightee
         # k_skywriting-offset around 0.00050 combined with logarithmic speed regression
         # may there is an additional distance rule necessary: skywriting only if endpoint is near/next to starting point
@@ -349,7 +383,7 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
         # cumulative sum of time -> timerow like timestamps
         df['cum_sum'] = df['time'].cumsum()
 
-        ## first layer has odd line number count and pairs start from 2nd+3rd entry. first koordinate tuple is ignored. dunno why.
+        # first layer has odd line number count and pairs start from 2nd+3rd entry. first koordinate tuple is ignored. dunno why.
         # all the others have even line count and start from first layer
         if len(df) % 2 == 1:
             df_laser = df.iloc[1::2].copy()
@@ -387,14 +421,20 @@ def vecTiming_hdf( path, lay=1, debug=0, readonly=0, changeExposure=1):
             eos_laser = df.iloc[1::2]
             eos_jump = df.iloc[0::2]
             return eos_jump, eos_laser
+    return 1
 
 def listpar(path):
-    '''
+    """
     helper function to create csv with all occuring parameter names to then add DOE values manually to this file before calling vecTiming_hdf()
 
-    Args: path
-    Returns: paramlist, partlist
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+    Returns:
+        tuple containing
+
+        - **paramlist** (*Array*) – Parameter Array
+        - **partlist** (*Array*) – Part name Array
+    """
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -432,13 +472,15 @@ def listpar(path):
     return paramlist, partlist
 
 def loopRedefinelaserpaths(path, correction=0):
-    '''
+    """
     Checks matching eosprint_layer and ch4raw_ files in subfolders of path and loops redefinelaserpathstarts() over those matching files.
-    Use correction!=0 layer numbers do not equal, e.g. eosprint_layer00001 belongs to ch4raw_00003: correction=2
 
-    Args: path, correction=0
-    Returns: matches
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        correction (int, optional): Use if layer numbers do not match e.g. eosprint_layer00001 belongs to ch4raw_00003: correction=2 ,defaults to 0
+    Returns:
+        matches (Array): Matched files
+    """
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -487,12 +529,15 @@ def loopRedefinelaserpaths(path, correction=0):
     return matches
 
 def getLoss(eos_laser_single, jmp_strt_lsr_len):
-    '''
+    """
     Calculate losses between eos_laser_single['time'] and jmp_strt_lsr_len['diff_ms']. Called by redefinelaserpathstarts()
 
-    Args: eos_laser_single, jmp_strt_lsr_len
-    Returns: eos_laser_single
-    '''
+    Args:
+        eos_laser_single (Pandas.DataFrame): EOS laser
+        jmp_strt_lsr_len (Pandas.DataFrame): EOS laser calculated jumps
+    Returns:
+        eos_laser_single (Pandas.DataFrame): EOS laser with calculated loss
+    """
 
     eos_laser_single['ttl'] = jmp_strt_lsr_len['diff_ms']
     eos_laser_single['loss'] = (eos_laser_single['time'] - jmp_strt_lsr_len['diff_ms']) / eos_laser_single['time']
@@ -504,14 +549,22 @@ def getLoss(eos_laser_single, jmp_strt_lsr_len):
     return eos_laser_single
 
 def chkLossMove(eos_laser_single, jmp_strt_lsr_len, errIndex, chk_time_ms, chk_loss):
-    '''
+    """
     Testrop with recalculation of loss. Called by redefinelaserpathstarts() while searching for issues in each iteration.
 
-    Args: eos_laser_single, jmp_strt_lsr_len, errIndex, chk_time_ms, chk_loss
-    Returns: eos_laser_single_drop, loss_viol_move, droppedtrueindex
-    '''
-    # errIndex is position to drop in eos_laser_single
-    # chk_time_ms, chk_loss are predifend values for loss check
+    Args:
+        eos_laser_single (Pandas.DataFrame): EOS laser
+        jmp_strt_lsr_len (Pandas.DataFrame): EOS laser calculated jumps
+        errIndex (int): Position to drop in eos_laser_single
+        chk_time_ms (float): value for time check
+        chk_loss (float): value for loss check
+    Returns:
+        tuple containing
+
+        - **eos_laser_single_drop** (*Pandas.DataFrame*) – EOS laser with dropped positions
+        - **loss_viol_move** (*int*) – New problematic position
+        - **droppedtrueindex** (*int) – True index of dropped position
+    """
     # swelds_io_idx is position until where problems are already fixed
     print(eos_laser_single.loc[errIndex - 2:errIndex + 2])
     # drop copy
@@ -522,7 +575,7 @@ def chkLossMove(eos_laser_single, jmp_strt_lsr_len, errIndex, chk_time_ms, chk_l
     eos_laser_single_drop.drop(errIndex, inplace=True)
     eos_laser_single_drop.reset_index(drop=True, inplace=True)
 
-    ## recalculate losses
+    # recalculate losses
     eos_laser_single_drop = getLoss(eos_laser_single_drop, jmp_strt_lsr_len)
     # get new problematic position
     lossfilter = eos_laser_single_drop.loc[
@@ -534,55 +587,63 @@ def chkLossMove(eos_laser_single, jmp_strt_lsr_len, errIndex, chk_time_ms, chk_l
 
     return eos_laser_single_drop, loss_viol_move, droppedtrueindex
 
-def getBoarders(eos_laser_single, jmp_strt_lsr_len, board_min_time_ms):
-    '''
-    Called by redefinelaserpathstarts. Calculation of long boarders (> board_min_time_ms) for validation of synchronization.
+def getBorders(eos_laser_single, jmp_strt_lsr_len, bord_min_time_ms):
+    """
+    Called by redefinelaserpathstarts. Calculation of long borders (> bord_min_time_ms) for validation of synchronization.
     Not really necessary at the moment (23.02.2022)
 
-    Args: eos_laser_single, jmp_strt_lsr_len, board_min_time_ms
-    Returns: eosboarders, use_boarders, sh_boarder_idxs
-    '''
-    use_boarders = False
-    # filter boarders
-    eosboarders = eos_laser_single.loc[
-        (eos_laser_single['exposureType'] == 5) & (eos_laser_single['time'] > board_min_time_ms)].copy()
+    Args:
+        eos_laser_single (Pandas.DataFrame): EOS laser
+        jmp_strt_lsr_len (Pandas.DataFrame): EOS laser calculated jumps
+        bord_min_time_ms (float): Minimum Time Border
+    Returns:
+        tuple containing
+
+        - **eosborders** (*Pandas.DataFrame*) – eos_laser_single fulfilling the given time border
+        - **use_borders** (*Boolean*) – Answers if the border was used
+        - **sh_border_idxs** (*float*) – If the number of border >0 it gives the index of the position difference otherwise -1
+    """
+    use_borders = False
+    # filter borders
+    eosborders = eos_laser_single.loc[
+        (eos_laser_single['exposureType'] == 5) & (eos_laser_single['time'] > bord_min_time_ms)].copy()
     # init positionerror
-    eosboarders['posdiff'] = 0
-    n_boarders = eosboarders.shape[0]
-    # equivalent boarders in ttl signal
-    ttlboarders = jmp_strt_lsr_len.loc[jmp_strt_lsr_len['diff_ms'] > 0.98 * board_min_time_ms].copy()
+    eosborders['posdiff'] = 0
+    n_borders = eosborders.shape[0]
+    # equivalent borders in ttl signal
+    ttlborders = jmp_strt_lsr_len.loc[jmp_strt_lsr_len['diff_ms'] > 0.98 * bord_min_time_ms].copy()
     # length difference between eos and ttl
     err_shift = (eos_laser_single.shape[0] - jmp_strt_lsr_len.shape[0])
-    # if there are boarders in eos and same number is found in ttl
-    if (n_boarders > 0) and (ttlboarders.shape[0] == n_boarders):
+    # if there are borders in eos and same number is found in ttl
+    if (n_borders > 0) and (ttlborders.shape[0] == n_borders):
         # substract by iteration because indexes do not match
-        for i in range(0, n_boarders):
-            eosboarders['posdiff'].iloc[i] = eosboarders.index[i] - ttlboarders.index[i]
-        print(f"{n_boarders} boarders found.")
-        # use for check if boardes next to each other are shifted relatively
-        eosboarders['posdiffdiff'] = eosboarders['posdiff'].diff()
-        eosboarders['posdiffdiff'].iloc[0] = eosboarders['posdiff'].iloc[0]
-        eosboarders['trueindex'] = eosboarders.index - eosboarders['posdiff']
-        err_shift_lastboard = eosboarders['posdiff'].iloc[-1]
-        if err_shift_lastboard <= (err_shift):
-            print(f"Last contourweld is shifted by {err_shift_lastboard}; missing weld count is: {err_shift}")
-            use_boarders = True
+        for i in range(0, n_borders):
+            eosborders['posdiff'].iloc[i] = eosborders.index[i] - ttlborders.index[i]
+        print(f"{n_borders} borders found.")
+        # use for check if bordes next to each other are shifted relatively
+        eosborders['posdiffdiff'] = eosborders['posdiff'].diff()
+        eosborders['posdiffdiff'].iloc[0] = eosborders['posdiff'].iloc[0]
+        eosborders['trueindex'] = eosborders.index - eosborders['posdiff']
+        err_shift_lastbord = eosborders['posdiff'].iloc[-1]
+        if err_shift_lastbord <= (err_shift):
+            print(f"Last contourweld is shifted by {err_shift_lastbord}; missing weld count is: {err_shift}")
+            use_borders = True
         else:
             print(
-                f"Warning: Last contourweld shift {err_shift_lastboard} is higher then missing weld count of {err_shift}")
-        # last boarder shift should be the highest otherwise ttlwelds are missing somewhere (should not happen)
-        if err_shift_lastboard != eosboarders['posdiff'].max():
+                f"Warning: Last contourweld shift {err_shift_lastbord} is higher then missing weld count of {err_shift}")
+        # last border shift should be the highest otherwise ttlwelds are missing somewhere (should not happen)
+        if err_shift_lastbord != eosborders['posdiff'].max():
             print(
-                f"Warning: Last counter shift ({err_shift_lastboard}) is not the highest shift value ({eosboarders['posdiff'].max()})")
+                f"Warning: Last counter shift ({err_shift_lastbord}) is not the highest shift value ({eosborders['posdiff'].max()})")
 
-        sh_boarder_idxs = eosboarders.loc[eosboarders['posdiffdiff'] > 0].index
+        sh_border_idxs = eosborders.loc[eosborders['posdiffdiff'] > 0].index
     else:
-        sh_boarder_idxs = -1
+        sh_border_idxs = -1
 
-    return eosboarders, use_boarders, sh_boarder_idxs
+    return eosborders, use_borders, sh_border_idxs
 
 def redefinelaserpathstarts(path, lay, correction=0):
-    '''
+    """
     Read correlating 4-channel ttl and eoslaserpath file to iteratively calculate differences usin a loss function.
     1) weld not measured (too short): short values simply missing: ttl count < eos count
     2) jump not measured (too short): two eos welds measured as one: ttl count < eos count
@@ -598,9 +659,15 @@ def redefinelaserpathstarts(path, lay, correction=0):
     should may not stop iterative correction which reaching equality in weld count, because if equal then loss is not considered anymore
     build loss check afterwards. change loss limit and recalculate
 
-    Args: lay, correction=0
-    Returns: <overwrite corrected eoslaserpath-files>
-    '''
+    Overwrites eoslaserpath-files with corrected files
+
+    Args:
+        path (str): Path of the input hdf5 files directory
+        lay (Array): Array of layers
+        correction (int, optional): Use if layer numbers do not match e.g. eosprint_layer00001 belongs to ch4raw_00003: correction=2 ,defaults to 0
+    Returns:
+        eoscopy (Pandas.DataFrame): Untouched EOS DataFrame before redefining
+    """
     # read ttl data
     # ttl_laser = jump_start; ttl_jump = jump_end
     # ttl_jump has laser starting times in column cum-sum and timelaser
@@ -634,7 +701,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
 
     eos_laser['cusu_onettl'] = 0
 
-    ## zerojumps are not measurable in ttl. assemble eos weldpaths with zerojumps inside to single one to make welds in general look like measured welds
+    # zerojumps are not measurable in ttl. assemble eos weldpaths with zerojumps inside to single one to make welds in general look like measured welds
     # collect all zero jumps
     eosjumpnull = eos_jump.loc[eos_jump['dis'] == 0].copy()
     # make index column
@@ -647,14 +714,14 @@ def redefinelaserpathstarts(path, lay, correction=0):
     eosjumpnull = eosjumpnull.drop(columns=eosjumpnull.columns[~eosjumpnull.columns.isin(['diff', 'idx'])])
     eosjumpnull['laserid'] = 0
 
-    ## eosjumpnull are only zerojumps. as long as diff is 2 they belong to one weld in ttl signal. number them with a laserid starting with 1
+    # eosjumpnull are only zerojumps. as long as diff is 2 they belong to one weld in ttl signal. number them with a laserid starting with 1
     k = 1
     for idx, val in eosjumpnull['diff'].iteritems():
         if val > 2:
             k += 1
         eosjumpnull.loc[idx, 'laserid'] = k
         # eos_laser.cusu_onettl.loc[k] = sum(eos_laser.time.loc[k:idx-1])
-    logger.info(f"Vector count where weld changes without measurable jump (e.g. boarders with zero jumps.): {k}")
+    logger.info(f"Vector count where weld changes without measurable jump (e.g. borders with zero jumps.): {k}")
 
     # to match indexes with eos_laser, substract index number by one and reset index
     eosjumpnull['idx'] = eosjumpnull['idx'] - 1
@@ -662,7 +729,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
     # copy values to eos_laser by index (default)
     eos_laser['cusu_onettl'] = eosjumpnull['laserid']
 
-    ## apply counting numbers to 2nd points of tuples
+    # apply counting numbers to 2nd points of tuples
     # new eos_laser dataframe
     eos_laser_single = eos_laser.copy()
     # change NaNs to zero (could also be done without)
@@ -674,15 +741,15 @@ def redefinelaserpathstarts(path, lay, correction=0):
     # delete unused columns
     eos_laser_single = eos_laser_single.drop(columns=eos_laser_single.columns[~eos_laser_single.columns.isin(
         ['partId', 'exposureType', 'dis', 'time', 'cum_sum', 'cusu_diff', 'cusu_onettl'])])
-    ## >> cusu_onettl gives now count for vectors which look like one in ttl signal. all other vectors should stand alone
+    # >> cusu_onettl gives now count for vectors which look like one in ttl signal. all other vectors should stand alone
 
-    ## iterate through singlewelds and collect data in first coordinate
+    # iterate through singlewelds and collect data in first coordinate
     j = 1
     while j <= k:
         # first and last coordinate
         index0 = eos_laser_single.loc[(eos_laser_single['cusu_onettl'] == j)].index[0]
         index1 = eos_laser_single.loc[(eos_laser_single['cusu_onettl'] == j)].index[-1]
-        ## following works because distance and time in between is zero. otherwise data of jumps would be collected too.
+        # following works because distance and time in between is zero. otherwise data of jumps would be collected too.
         # dis in first entry is sum of distances
         eos_laser_single.loc[index0, 'dis'] = sum(
             eos_laser_single.loc[(eos_laser_single['cusu_onettl'] == j), 'dis'])
@@ -697,7 +764,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
             eos_laser_single.loc[(eos_laser_single['cusu_onettl'] == j)].index[1:]).copy()
         j += 1
 
-    ## >> eos_laser has only first point of laser tuples and eos_laser_single has those with combined first points for standalone-looking welds in ttl signal
+    # >> eos_laser has only first point of laser tuples and eos_laser_single has those with combined first points for standalone-looking welds in ttl signal
     # time to milliseconds
     eos_laser_single.time = eos_laser_single.time * 1000
     # reset_index drop=False makes column with old indexes -> confusing -> rename it
@@ -710,8 +777,8 @@ def redefinelaserpathstarts(path, lay, correction=0):
     if len(eos_laser_single) - len(jmp_strt_lsr_len) < 0:
         logger.info(f"WARNING: Less calculated welds then measured. Function is not able to correct this!")
 
-    ## !! indexes come from resetted eos_laser_single --> they do not equal eos_laser indexes
-    ## correction calculation starts in next while loop
+    # !! indexes come from resetted eos_laser_single --> they do not equal eos_laser indexes
+    # correction calculation starts in next while loop
     errIndList = []
     ttlDropLst = []
     saveDrops = []
@@ -740,11 +807,11 @@ def redefinelaserpathstarts(path, lay, correction=0):
     err2find = abs(eos_laser_single.shape[0] - jmp_strt_lsr_len.shape[0])
     sweld_cnt = swelds.shape[0]
 
-    # boarders are mostly unique signals (standalone, long time especially because of eliminated zerojumps at corners)
-    # check if contours can be used. may use down 4 and upskin 6 too. 5 is standard boarder
-    # only use large boarders > 50 ms
+    # borders are mostly unique signals (standalone, long time especially because of eliminated zerojumps at corners)
+    # check if contours can be used. may use down 4 and upskin 6 too. 5 is standard border
+    # only use large borders > 50 ms
 
-    board_min_time_ms = 50
+    bord_min_time_ms = 50
 
     chk_loss = 0.1
     chk_time_ms = 2
@@ -759,7 +826,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
     eos_laser_single_bkp = eos_laser_single.copy()
     jmp_strt_lsr_len_bkp = jmp_strt_lsr_len.copy()
 
-    '''
+    """
     - the less long a vector is the lower is its accuracy / higher is its loss
     - maybe fasten: long "standalone" vectors with high accuracy eos/ttl -> until here everything is fine
     - assumption: no effects present which cause increase of ttlwelds compared to eoswelds
@@ -774,17 +841,17 @@ def redefinelaserpathstarts(path, lay, correction=0):
     2b) check missing jumps
     2c) check false jumps
     3) if loss viol is behind next sweld proceed with 2)
-    4) if loss_viol behind boarder and boarder io proceed
-    '''
+    4) if loss_viol behind border and border io proceed
+    """
 
-    # get boarders
-    eosboarders, use_boarders, sh_boarder_idxs = getBoarders(eos_laser_single, jmp_strt_lsr_len, board_min_time_ms)
+    # get borders
+    eosborders, use_borders, sh_border_idxs = getBorders(eos_laser_single, jmp_strt_lsr_len, bord_min_time_ms)
 
-    if use_boarders:
-        logger.info(f"{len(sh_boarder_idxs)} shifted boarders: {list(sh_boarder_idxs)}")
+    if use_borders:
+        logger.info(f"{len(sh_border_idxs)} shifted borders: {list(sh_border_idxs)}")
         logger.info(
-            f"True boarders positions are: {list(eosboarders['trueindex'].loc[eosboarders['posdiffdiff'] > 0])}")
-        logger.info(f"Assigned shifts: {list(eosboarders['posdiffdiff'].loc[eosboarders['posdiffdiff'] > 0])}")
+            f"True borders positions are: {list(eosborders['trueindex'].loc[eosborders['posdiffdiff'] > 0])}")
+        logger.info(f"Assigned shifts: {list(eosborders['posdiffdiff'].loc[eosborders['posdiffdiff'] > 0])}")
 
     # information value of assumed iterations within while
     iter_forecast = eos_laser_single.shape[0] - jmp_strt_lsr_len.shape[0] - 1
@@ -818,7 +885,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
         if loss_viol_old > loss_viol:
             logger.info(f"Warning: Loss moves backwards!")
 
-        ## 1
+        # 1
         # try swelds until violation without already checked (idx > io_eosidx). else: option 2 and 3
         swelds_viol = swelds.loc[(swelds.index < loss_viol) & (swelds['idx'] > sweld_io_eosidx)]
         # if min 1 sweld found in range and nomoreswelds = True was not set yet (to go in else)
@@ -836,7 +903,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
                 logger.info(f"Sweld drop {errIndex} moves loss forwards ({loss_viol_move}). Drop accepted.")
                 # errorindexlist with true eos indexes because eos_laser_single indexes change iteratively
                 errIndList.append(int(droppedtrueindex))
-                # eosboarders.loc[miss_ttlwelds_ind, 'posdiffdiff'] -= 1
+                # eosborders.loc[miss_ttlwelds_ind, 'posdiffdiff'] -= 1
                 loss_viol = loss_viol_move
             else:
                 logger.info(f"Sweld drop rejected. Loss moves wrong / backwards: {loss_viol_move} ({loss_viol})")
@@ -854,7 +921,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
 
         else:
             logger.info(f"loss_viol before first not already checked sweld.")
-            ## 2
+            # 2
             # check if missing jump or false jump
 
             # output for debugging
@@ -869,7 +936,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
             if curr_loss < 0:
                 logger.info(f"{curr_loss} < 0 : Missing jump assumed")
 
-                ## 2: combine target eos welds and compare to measured ttl weld
+                # 2: combine target eos welds and compare to measured ttl weld
                 # combined loss
                 time_comb = eos_laser_single.time.loc[loss_viol] + eos_laser_single.time.loc[loss_viol + 1]
                 chk_hiddenjump_byloss = (time_comb - jmp_strt_lsr_len['diff_ms'].loc[loss_viol]) / time_comb
@@ -885,7 +952,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
                     logger.info(
                         f"combined true eos indexes: {eos_laser_single['idx'].loc[loss_viol], eos_laser_single['idx'].loc[loss_viol + 1]}")
                     logger.info(f"Combination not solved in further functions (18.02.2022)")
-                    ## needs to be updated in eos dataset. interpolation will be tricky because two welds of maybe different direction need to be merged or splitt ttl signal by rule of three
+                    # needs to be updated in eos dataset. interpolation will be tricky because two welds of maybe different direction need to be merged or splitt ttl signal by rule of three
 
                     # testdrop. be careful because update of time happens before functions prints. print is not original list.
                     eos_laser_single_1drop, loss_viol_move, droppedtrueindex = chkLossMove(eos_laser_single,
@@ -912,7 +979,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
             if curr_loss > 0:
                 logger.info(f"{curr_loss} > 0 : False jump assumed")
 
-                ## 3
+                # 3
                 # false jump: combine welds
                 ttl_comb = eos_laser_single.loc[loss_viol, 'ttl'] + eos_laser_single.loc[loss_viol + 1, 'ttl']
                 # get next jumpstart
@@ -936,7 +1003,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
                     logger.info(f"{list(jmp_strt_lsr_len.loc[loss_viol + 1])}")
                     logger.info(
                         f"Redefinelaserpathstarts calculates the by applyEOS used timerow. TTL file will not be updated. In xytime there will be ttl low (laser off) with assigned eos welds following the correction here.) (23.02.2022)")
-                    ## needs to be updated in eos dataset. interpolation will be tricky because two welds of maybe different direction need to be merged or splitt ttl signal by rule of three
+                    # needs to be updated in eos dataset. interpolation will be tricky because two welds of maybe different direction need to be merged or splitt ttl signal by rule of three
 
                     # testdrop
                     logger.info(eos_laser_single.loc[errIndex - 2:errIndex + 2])
@@ -944,7 +1011,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
                     jmp_strt_lsr_len.drop(errIndex, inplace=True)
                     jmp_strt_lsr_len.reset_index(drop=True, inplace=True)
 
-                    ## recalculate losses
+                    # recalculate losses
                     eos_laser_single_drop = getLoss(eos_laser_single, jmp_strt_lsr_len)
                     # get new problematic position
                     loss_viol_move = eos_laser_single_drop.loc[(eos_laser_single_drop['time'] > chk_time_ms) & (
@@ -980,7 +1047,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
         f"eos_laser_single.shape: {eos_laser_single.shape[0]}; jmp_strt_lsr_len.shape: {jmp_strt_lsr_len.shape[0]}")
     logger.info(f"Number of missing short welds: {cnt_1}; missing jumps: {cnt_2}; false jumps: {cnt_3}")
     logger.info(errIndList)
-    ## until now eos dataset is not touched
+    # until now eos dataset is not touched
 
     eoscopy = eos.copy()
     fdrops = f[:-3] + '_eosdrops.txt'
@@ -1014,7 +1081,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
     # inplace added otherwise no change
     eos.reset_index(drop=True, inplace=True)
 
-    ## until here it is ascending
+    # until here it is ascending
 
     # drop false jumps in ttl
     lsr_strt_jmp_len = lsr_strt_jmp_len.reset_index()
@@ -1026,10 +1093,10 @@ def redefinelaserpathstarts(path, lay, correction=0):
             # lsr_strt_jmp_len.loc[val:, 'timelaser'] = lsr_strt_jmp_len.loc[val:, 'timelaser'].copy() - time_corr
             # jmp_strt_lsr_len.loc[val:, 'timelaser'] = jmp_strt_lsr_len.loc[val:, 'timelaser'].copy() - time_corr
 
-    ## until here okay, except if ttl weld was dropped --> ttl jump needs to be dropped too
+    # until here okay, except if ttl weld was dropped --> ttl jump needs to be dropped too
     # drop in: jmp_strt_lsr_len --> drop same in lsr_strt_jmp_len
 
-    ## from here false distances and correction for laser starts between eos and ttl are calcuated
+    # from here false distances and correction for laser starts between eos and ttl are calcuated
     if len(eos) % 2 == 1:
         eos_laser = eos.iloc[1::2].copy()
         eos_jump = eos.iloc[0::2].copy()
@@ -1051,7 +1118,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
     # reset index of jumps again but ignore new column
     eos_jump = eos_jump.reset_index(drop=True)
 
-    ## overwrite calculated jump length in eos by measured values from ttl signal
+    # overwrite calculated jump length in eos by measured values from ttl signal
     eos_jump.cum_sum = lsr_strt_jmp_len.timelaser
     # reset index to original and delete helper column
     eos_jump = eos_jump.set_index(eos_jump['index'])
@@ -1062,7 +1129,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
     # update measured ttl values from jump data to full dataset
     eos['cum_sum'].update(eos_jump['cum_sum'])
 
-    ## update laser end points
+    # update laser end points
     # new minus old --> earlier starting -> negative value -> shift by 1 und addition
     eos['cusu_diff'] = eos['cum_sum'] - eos['cum_sum_old']
     eos['cusu_diff_old'] = eos['cusu_diff']
@@ -1097,7 +1164,7 @@ def redefinelaserpathstarts(path, lay, correction=0):
     return eoscopy
 
 def tJumpTTL(path, layer, sampling_ms=0.02):
-    '''
+    """
     Gives dataframes with temporal lengths and positions of found jumps and laservectors in ttl signal of entered layer.
 
     Procedure:
@@ -1107,9 +1174,16 @@ def tJumpTTL(path, layer, sampling_ms=0.02):
     where idx-difference is > 1 a jump was in between and vice versa -> row gives start of weld and diff_idx length of jump to this row/time
     filtered and multiplied with sampling time gives temporal length of jump
 
-    Args: layer,sampling_ms=0.02
-    Returns: jmp_strt_lsr_len, lsr_strt_jmp_len
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        lay (Array): Array of layers
+        sampling_ms (float): Sampling rate in ms, defaults to 0.02
+    Returns:
+        tuple containing
+
+        - **jmp_strt_lsr_len** (*Pandas.DataFrame*)  –  Temporal lengths and position of jumps found with a threshold
+        - **lsr_strt_jmp_len** (*Pandas.DataFrame*)  –  Temporal lengths and position of jumps calculated through indices
+    """
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -1121,7 +1195,7 @@ def tJumpTTL(path, layer, sampling_ms=0.02):
     df.columns = ['time', 'lse', 'ttl', 'kse_bp', 'kse_rec']
     df = df.drop(['lse', 'kse_bp', 'kse_rec'], axis=1)
 
-    # two treshold values for beginning x samples of layer and rest --> indexboarder
+    # two treshold values for beginning x samples of layer and rest --> indexborder
     tresh1 = 1
     tresh2 = -1
     # difference of indexes marks laserweld by values greater than one and by that the next jump
@@ -1137,14 +1211,14 @@ def tJumpTTL(path, layer, sampling_ms=0.02):
     sampling_ms = df['diffs'].median() * 1000
     logger.info('median sampling time steps median [ms]: ' + str(sampling_ms))
 
-    # threshold boarder, empiric value for 50kHz was around row 7000 -> 0.3 s for any sampling frequ
-    indexboarder = power + int(0.294 / sampling_ms * 1000)
+    # threshold border, empiric value for 50kHz was around row 7000 -> 0.3 s for any sampling frequ
+    indexborder = power + int(0.294 / sampling_ms * 1000)
 
     # df_jumps = all values lower then thresholds represent jumps and vice versa for welds
-    df_jumps = df.loc[((df['ttl'] < tresh1) & (df.index < indexboarder)) | (
-                (df['ttl'] < tresh2) & (df.index >= indexboarder))].copy()
-    df_laser = df.loc[((df['ttl'] >= tresh1) & (df.index < indexboarder)) | (
-                (df['ttl'] >= tresh2) & (df.index >= indexboarder))].copy()
+    df_jumps = df.loc[((df['ttl'] < tresh1) & (df.index < indexborder)) | (
+                (df['ttl'] < tresh2) & (df.index >= indexborder))].copy()
+    df_laser = df.loc[((df['ttl'] >= tresh1) & (df.index < indexborder)) | (
+                (df['ttl'] >= tresh2) & (df.index >= indexborder))].copy()
 
     # diff gives rowdifferences of all. filtered and cumulative sum gives timerow for filter
     df_jumps['cum-sum'] = df_jumps.diffs.cumsum()
@@ -1152,20 +1226,20 @@ def tJumpTTL(path, layer, sampling_ms=0.02):
     # new column with index integers
     df_jumps['idx'] = df_jumps.index
     # values greater 1 in diff_idx are idx-lengths of laserwelds between jumps
-    '''
+    """
     idx diff_idx
     11  NaN
     12  1
     47  35
     48  1
     49  1
-    '''
+    """
     df_jumps['diff_idx'] = df_jumps.idx.diff()
 
     # rows with start of jump end length of weld before
     jmp_strt_lsr_len = df_jumps.loc[df_jumps['diff_idx'] > min_len_idx].copy()
 
-    ## same other way round would find length of jumps
+    # same other way round would find length of jumps
     # cumsum of diffs gives timerow
     df_laser['cum-sum'] = df_laser.diffs.cumsum()
     # new column with index integers
@@ -1203,19 +1277,24 @@ def tJumpTTL(path, layer, sampling_ms=0.02):
         f"Measured laser samples: {laser_on} with total time {df_laser['cum-sum'].iloc[-1]}; count: {weld_cnt}")
     logger.info(f"Total layer time: {df['time'].iloc[-1] - df['time'].iloc[0]} started at {df['time'].iloc[-1]}")
 
-    ## some error may results from not exact sampling. many samples have 0.021 instead of 0.02 ms timestamps
+    # some error may results from not exact sampling. many samples have 0.021 instead of 0.02 ms timestamps
 
     return jmp_strt_lsr_len, lsr_strt_jmp_len
 
-def filesInFolder(dir, typ='h5', num_prefix=0):
-    '''
+def filesInFolder(path, typ='h5', num_prefix=0):
+    """
     Helper function to select all files by file ending and prefix to zfilled layernumber 00000
-    Args: dir, typ='h5', num_prefix=0
-    Returns: validfiles
-    '''
+
+    Args:
+        path (str): Path of the input hdf5 files directory
+        typ (str): Type of the files,  defaults to 'h5'
+        num_prefix (int): Find all files between '.' and num_prefix, defaults to 0
+    Returns:
+        validfiles (Array): All filtered valid files
+    """
 
     # files in folder
-    files = [f.path for f in os.scandir(dir)]
+    files = [f.path for f in os.scandir(path)]
     validfiles = []
     for file in files:
         # check file ending
@@ -1237,16 +1316,18 @@ def filesInFolder(dir, typ='h5', num_prefix=0):
     return validfiles
 
 def lab2hdf_4ch(path):
-    '''
+    """
     Process 4-channel layerwise acoustic measurement txt files written by labview and saves as hdf-files with pandas dataframe key='df'.
     Timestamp is changed to float total seconds starting with zero in each layer.
     If day changes, then 24*60*60 seconds are added to each float value of the new day.
     By this, the maximum processable layertime is 24 hours.
     Calls folder2Files to get ttldir in project path and collects all txt files by calling filesInfolder() from ttldir.
 
-    Args: path
-    Returns: 1
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+    Returns:
+        1
+    """
 
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
@@ -1287,11 +1368,11 @@ def lab2hdf_4ch(path):
         # if daychange within one layer then add 24 hours
         tmin = df['time'].min()
         tmax = df['time'].max()
-        dayboarder = df.loc[df['time'] == tmin].index[0]
-        if dayboarder > df.loc[df['time'] == tmax].index[0]:
+        dayborder = df.loc[df['time'] == tmin].index[0]
+        if dayborder > df.loc[df['time'] == tmax].index[0]:
             logger.info(
-                f"Dayboarder within layer detected and corrected! Time1: {df.loc[dayboarder - 1, 'time']}, Time2: {df.loc[dayboarder, 'time']}")
-            df.loc[dayboarder:, 'time'] = df.loc[dayboarder:, 'time'].copy() + 24 * 60 * 60
+                f"Dayborder within layer detected and corrected! Time1: {df.loc[dayborder - 1, 'time']}, Time2: {df.loc[dayborder, 'time']}")
+            df.loc[dayborder:, 'time'] = df.loc[dayborder:, 'time'].copy() + 24 * 60 * 60
 
         # Saving files
         a = fname.rfind('_lay')
@@ -1305,15 +1386,19 @@ def lab2hdf_4ch(path):
 
 
 def loopApplyEos2TTL(path, truelayers, correction=0):
-    '''
+    """
     Loop call function applyEos2TTL with all truelayers (those who have eoslaserpath and ch4raw files).
     Correction has to be set in:
     truelayers = loopRedefinelaserpaths(path, correction=0)
     too, to get correct truelayers-list.
 
-    Args: path, truelayers, correction=0
-    Returns: 1
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        truelayers (Array): All redefined layers
+        correction (int, optional): Use if layer numbers do not match e.g. eosprint_layer00001 belongs to ch4raw_00003: correction=2 ,defaults to 0
+    Returns:
+        1
+    """
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -1327,12 +1412,16 @@ def loopApplyEos2TTL(path, truelayers, correction=0):
     return 1
 
 def applyEos2TTL(path, lay, correction=0):
-    '''
+    """
     Apply xy-coordinates to resultfile based on acoustic/ttl measurement data ch4raw
 
-    Args: path, lay, correction=0
-    Returns: 1
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        lay (Array): Array of layers
+        correction (int, optional): Use if layer numbers do not match e.g. eosprint_layer00001 belongs to ch4raw_00003: correction=2 ,defaults to 0
+    Returns:
+        1
+    """
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
     logger.info(out)
@@ -1399,17 +1488,6 @@ def applyEos2TTL(path, lay, correction=0):
 
     fout = resdir + "\\eosxytime_" + str(lay).zfill(5) + ".h5"
     df.to_hdf(fout, key='df', mode='w')  # , complevel=9)
-
-
-
-
-
-
-
-
-
-
-
 
 
 

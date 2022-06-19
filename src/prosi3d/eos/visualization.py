@@ -11,20 +11,28 @@ import inspect
 
 
 def vectorGraph(path, layer, ub=0, lb=0, corr=0):
-    '''
+    """
     Helper function for generating chart with ttl signal and square-signal of eosprintapi exported eoslaserpath
-    Use upper bound (ub) and lb for specific chart window. full frame needs some cpu-time.
-    Use corr!=0 if ttl number needs an offset to entered layer (number of eoslaserpath-file).
+    Use upper bound (ub) and lower bound (lb) for specific chart windows. The full-frame needs some CPU time.
+    Use corr!=0 if the ttl number needs an offset to the entered layer (number of eoslaserpath-file).
 
     Use for controlling corrections for e.g. skywriting used for calculation of laser-xy-time-signal in vectortimes
-    reads processed eosprint-timeline from vectortimes
-    reads ttl signal and time from hdf5 starting with end of layer. (see trigger signal for laser-off)
+    Reads processed eosprint-timeline from vectortimes
+    Reads ttl signal and time from hdf5 starting with the end of the layer. (see trigger signal for laser-off)
+
+    Calls vector.folder2Files()
 
     Issue: first laser vector is graphically not represented
 
-    Args: layer, path, ub=0, lb=0, corr=0
-    Returns: <chart>
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        layer (int): Number of the layer
+        ub (int, optional): Upper boundary value, must be between 0 and 100, defaults to 0
+        lb (int, optional): Lower boundary value, must be between 0 and 100, defaults to 0
+        corr (int, optional): Correction value, defaults to 0
+    Returns:
+        1
+    """
     corr = int(corr)
     if lb > ub:
         print("lower boundary value (lb) must be smaller then upper boundary value (ub). Values are flipped.")
@@ -36,7 +44,7 @@ def vectorGraph(path, layer, ub=0, lb=0, corr=0):
         ub = 5
         lb = 0
 
-    _, _, _, vecdir, ttldir, _, _ = prosi3d.eos.processor.folder2Files(path, 0)
+    _, _, _, vecdir, ttldir, _, _ = prosi3d.eos.vector.folder2Files(path, 0)
 
     f = vecdir + "\\eoslaserpath_" + str(layer).zfill(5) + ".h5"
     g = ttldir + "\\ch4raw_" + str(layer + corr).zfill(5) + ".h5"
@@ -110,15 +118,21 @@ def vectorGraph(path, layer, ub=0, lb=0, corr=0):
     if ub == 0 and lb == 0:
         plt.plot(dg.time, dg.ttl)  # , linewidth=0.1)
     plt.tight_layout()
+    return 1
 
 def eosprintInfo(path, layer, vers=1):
-    '''
+    """
     Helper function to print counted exposureTypes in vers=0: eosprint_layer or vers=1: eoslaserpath
     Note that contours in EOSPRINT API 2.8 exports (eosprint_layer) are defined wrong as infill (2), which is corrected in eoslaserpath.
+    Calls vector.folder2Files()
 
-    Args: layer, vers=1
-    Returns: 1
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        layer (int): Number of the layer
+        vers (int,optional): Decides which eos files will be processed, defaults to 1
+    Returns:
+        1
+    """
 
     logger = logging.getLogger(inspect.currentframe().f_code.co_name)
     out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
@@ -134,20 +148,28 @@ def eosprintInfo(path, layer, vers=1):
     return 1
 
 def plotTTL(path, layer, ub=0, lb=0, corr=0):
-    '''
+    """
     Helper function for generating chart with ttl signal and square-signal of eosprintapi exported eoslaserpath
-    Use upper bound (ub) and lb for specific chart window. full frame needs some cpu-time.
+    Use upper bound (ub) and lb for specific chart window.The full-frame needs some CPU time.
     Use corr!=0 if ttl number needs an offset to entered layer (number of eoslaserpath-file).
 
     Use for controlling corrections for e.g. skywriting used for calculation of laser-xy-time-signal in vectortimes
-    reads processed eosprint-timeline from vectortimes
-    reads ttl signal and time from hdf5 starting with end of layer. (see trigger signal for laser-off)
+    Reads processed eosprint-timeline from vectortimes
+    Reads ttl signal and time from hdf5 starting with the end of the layer. (see trigger signal for laser-off)
+
+    Calls vector.folder2Files()
 
     Issue: first laser vector is graphically not represented
 
-    Args: layer, path, ub=0, lb=0, corr=0
-    Returns: <chart>
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        layer (int): Number of the layer
+        ub (int, optional): Upper boundary value, must be between 0 and 100, defaults to 0
+        lb (int, optional): Lower boundary value, must be between 0 and 100, defaults to 0
+        corr (int, optional): Correction value, defaults to 0
+    Returns:
+        1
+    """
 
     # avoid errors by false arguments
     corr = int(corr)
@@ -199,20 +221,24 @@ def plotTTL(path, layer, ub=0, lb=0, corr=0):
     if ub == 0 and lb == 0:
         plt.plot(dg.time, dg.ttl)  # , linewidth=0.1)
     plt.tight_layout()
+    return 1
 
 def loopVectors(path, mode=0):
-    '''
+    """
     Batch processing for genVectors()
-    start loop with either single layer number
-    calls genVectors()
-    saves graphical representation as pdf files
+    Start loop with either single layer number, laser paths or both
+    Calls genVectors() and vector.folder2Files()
+    Saves graphical representation as pdf files
     mode=1: only eosprint_layer
     mode=2: only eoslaserpath
     mode=0: both
 
-    Args: path, mode=0
-    Returns: 1
-    '''
+    Args:
+        path (str): Path of the input hdf5 files directory
+        mode (int, optional): Decides which eos files will be processed, defaults to 0
+    Returns:
+        1
+    """
 
     _, _, _, vecdir, _, _, _ = prosi3d.eos.vector.folder2Files(path, 0)
 
@@ -257,17 +283,23 @@ def loopVectors(path, mode=0):
     return 1
 
 
-def genVectors(lay, path=0, pdf=0, color_vector=0, jumps=0):
-    '''
-    generates graphical representation of eosprint makro scan vectors either via qt5 or saved as pdf (pdf=1 saves pdf instead of qt5 inline plot)
+def genVectors(lay, path=None, pdf=0, color_vector=0, jumps=0):
+    """
+    Generates graphical representation of eosprint makro scan vectors either via qt5 or saved as pdf (pdf=1 saves pdf instead of qt5 inline plot)
     jumps = 1 swaps order to show jumps
     color_vector = >123< colors vector number 123
-    calls function setColor()
-    give it a layer number and project path or give it a filepath
+    Calls function setColor() and vector.folder2Files()
+    Give it either a layer number with the project path or a direct filepath
 
-    Args: lay,path=0,pdf=0,color_vector=0,jumps=0
-    Returns: 1
-    '''
+    Args:
+        lay (int or str): Layer number or direct filepath
+        path (str, optional): Path of the input hdf5 files directory, defaults to None
+        pdf (int, optional): Decides how the graphical representation will be shown, defaults to 0
+        color_vector (int, optional): Vector number will be highlighted in the graphical representation, defaults to 0
+        jumps (int, optional): Amount to skip between vectors, defaults to 0
+    Returns:
+        1
+    """
 
     if pdf == 0:
         matplotlib.use('Qt5Agg')
@@ -280,7 +312,7 @@ def genVectors(lay, path=0, pdf=0, color_vector=0, jumps=0):
     try:
         num = int(lay)
         if lay == num:
-            if path == 0:
+            if path is None:
                 print('Layer number entered but no project directory/path')
             else:
                 _, _, _, vecdir, _, _, _ = prosi3d.eos.vector.folder2Files(path, 0)
@@ -301,7 +333,7 @@ def genVectors(lay, path=0, pdf=0, color_vector=0, jumps=0):
     plt.xlim(0, 250)
     plt.ylim(0, 250)
 
-    ## first layer has odd line number count
+    # first layer has odd line number count
     # odd line numbers: skip first line (index 0) and use then following pairs
     if len(df) % 2 == 1:
         a = 1
@@ -338,17 +370,19 @@ def genVectors(lay, path=0, pdf=0, color_vector=0, jumps=0):
     return 1
 
 def setColor(expType):
-    '''
-    defines colors regarding eos exposureType number.
-    called by function genVectors().
+    """
+    Defines colors regarding eos exposureType number.
+    Called by function genVectors().
 
-    Args: expType
-    Returns: Color according to expType or black Color if the expType is invalid
-    '''
+    Args:
+        expType (int): exposure type
+    Returns:
+        (str): Color according to expType or black Color if the expType is invalid
+    """
     switch = {
         # hatch
-        0: 'dodgerblue',  # Ansicht Bauteilaußenkante EOSprint
-        # dunkler -> downskin, heller -> upskin
+        0: 'dodgerblue',  # View of part outter edge EOSprint
+        # darker -> downskin, brigther -> upskin
         1: 'seagreen',  # down
         2: 'mediumspringgreen',  # in
         3: 'springgreen',  # up
