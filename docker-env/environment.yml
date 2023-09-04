@@ -8,6 +8,7 @@ dependencies:
   - numpy
   - pandas
   - tqdm
+  - scipy
   - matplotlib
   - h5py
   - sphinx
