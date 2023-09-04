@@ -3,9 +3,12 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python=3.7
+  - python=3.11
   - keras
   - numpy
+  - pandas
+  - tqdm
+  - scipy
   - matplotlib
   - h5py
   - sphinx
