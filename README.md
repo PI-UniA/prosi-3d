@@ -1,5 +1,5 @@
 ![License](https://img.shields.io/github/license/pzimbrod/prosi-3d)
-![Build Status](https://img.shields.io/github/actions/workflow/status/pzimbrod/prosi-3d/build)
+![Build Status](https://img.shields.io/github/actions/workflow/status/pzimbrod/prosi-3d/CI.yml)
 [![Documentation Status](https://readthedocs.org/projects/prosi-3d/badge/?version=latest)](https://prosi-3d.readthedocs.io/en/latest/?badge=latest)
 ![Issues](https://img.shields.io/github/issues/pzimbrod/prosi-3d)
 ![PRs](https://img.shields.io/github/issues-pr/pzimbrod/prosi-3d)
