@@ -120,3 +120,63 @@ def tJumpTTL(layer, path, sampling_ms=0.02):
     ## some error may results from not exact sampling. many samples have 0.021 instead of 0.02 ms timestamps
     
     return jmp_strt_lsr_len, lsr_strt_jmp_len
+
+def test_len_diff(df):
+    eos = len(df.loc[~df['dura_eos'].isna()])
+    ttl = len(df.loc[~df['dura_ttl'].isna()])
+    return eos - ttl
+
+
+def update_ttlid_solved(df, welds, ttlwelds):
+    '''
+    Overwrite ttlid with index of df.
+    Update weld.id 
+    
+    Return: welds
+    '''
+    logger = logging.getLogger(inspect.currentframe().f_code.co_name)
+    # initialize counter
+    ttlidx = 0
+    cnt_del = 0
+
+    # df is based on ttl signal. rows represent weld measurements. column weld_id collects eos welds measured as one weld (e.g. conturs).
+    weld_id_lst = [np.array(x.split(',')).astype(int) for x in df.weld_ids]
+    #weld_id_lst_flat = np.concatenate(weld_id_lst)#.ravel()
+    
+    # iterate weld_id_lst from dateframe where one row equals one measureable weld
+    for weld_ids in weld_id_lst:
+        init_one_measurement = 0
+
+        # weld_id is a valid id only. weld_id != missing ids
+        for weld_id in weld_ids:
+            
+            welds[weld_id].ttlid = ttlidx
+            logger.info(f'weld_id: {weld_id}; .ttlid set to: {ttlidx}; ttlwelds[ttlidx].t0 = {ttlwelds[ttlidx].t0}')
+
+            # apply t0 for single and multi measured
+            if init_one_measurement == 0:
+                welds[weld_id].t0 = ttlwelds[ttlidx].t0
+                welds[weld_id].t1ttl = welds[weld_id].t0 + ttlwelds[ttlidx].duration_ms/1000
+            else:
+                # 01.03.2023 division with 1000 added
+                #welds[weld_id].t0 = ttlwelds[ttlidx].t0 + welds[weld_id-init_one_measurement].duration_ms()/1000
+                welds[weld_id].t0 = welds[weld_id_prv].t0 + welds[weld_id_prv].duration_ms()/1000
+                #welds[weld_id].t1ttl = welds[weld_id].t0 + ttlwelds[ttlidx].duration_ms/1000
+
+            ## mark missing welds with ttlid = -1
+            # if weld id equals next integer value none is missing
+            if cnt_del == weld_id:
+                cnt_del += 1
+            else:
+                # if not one is missing. update ttlid with -1
+                welds[cnt_del].ttlid = -1
+                cnt_del += 2
+
+                ## check would be:
+                #np.isin(cnt_del, np.concatenate(weld_id_lst)) == False --> not part of measurement
+            
+            weld_id_prv = weld_id
+            init_one_measurement += 1
+
+        ttlidx += 1
+    return welds

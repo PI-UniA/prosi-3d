@@ -47,3 +47,44 @@ def readDf(path):
     logger.info(f'Job: {fname.rsplit(delim,1)[-1]} has {len(layers)} layers with {len(df)/2} total vectors.')
 
     return df, layers, vecdir
+
+def listpar_stl(path):
+    '''
+    helper function editet to return all stl file names from openjob file
+
+    Args: path
+    Returns: partlist
+    '''
+    
+    # logger = logging.getLogger(inspect.currentframe().f_code.co_name)
+    # out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
+    # logger.info(out)
+    
+    _, _, jobfile, _, _, _, _, _ = folder2Files(path,0)
+    
+    f = open(jobfile, 'r')
+    df = f.readlines()
+    partlist = []
+    paramlist = []
+    i = 0
+    for line in df:
+        if i == 0:
+            vers = line.find('creator_version')
+            #logger.info(line[vers:])
+                
+        pos_par = line.find('<parameter>')
+        if pos_par != -1:
+            s = pos_par + 11
+            e = line.find('</parameter>', s)
+            param = line[s:e]
+            paramlist.append(param)
+            
+            s = prev_line.find(' name="') + 7
+            e = prev_line.find('"', s)
+            part = prev_line[s:e]
+            partlist.append(part)
+            
+        prev_line = line
+        i += 1
+    
+    return partlist

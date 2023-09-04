@@ -1,3 +1,5 @@
+import pandas as pd
+
 def point_in_polygon(polygon, point):
     """
     Raycasting Algorithm to find out whether a point is in a given polygon.
@@ -69,11 +71,11 @@ def getPnts(fname, pnts=4):
 
 def getPolygons(path, partlist):
     path = path + '\\stl\\'
-    #files = prosi.filesInFolder_simple(path, typ='txt')
+    #files = filesInFolder_simple(path, typ='txt')
     polygonlist = []
     for part in partlist:
         txtfile = path + part.rsplit('.', 1)[0] + '.txt'
-        polygon = prosi.shapePolygon(txtfile)
+        polygon = shapePolygon(txtfile)
         polygonlist.append(polygon)
     
     return polygonlist
@@ -84,7 +86,7 @@ def shapePolygon(fname):
     iterative sorting by nearest next point to create a polygon with points in the right row.
     does not work for star-shaped areas -> then better use alphashape or sth else for sorting.
     '''
-    pnts = prosi.getPnts(fname)
+    pnts = getPnts(fname)
     # last point equals first point because of getPnts() to create a closed polygon
     idxlst = []
     df = pnts[1:-1].copy()
@@ -154,46 +156,6 @@ def getZ(fname):
     return z
 
 
-def listpar_stl(path):
-    '''
-    helper function editet to return all stl file names from openjob file
-
-    Args: path
-    Returns: partlist
-    '''
-    
-    # logger = logging.getLogger(inspect.currentframe().f_code.co_name)
-    # out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
-    # logger.info(out)
-    
-    _, _, jobfile, _, _, _, _, _ = folder2Files(path,0)
-    
-    f = open(jobfile, 'r')
-    df = f.readlines()
-    partlist = []
-    paramlist = []
-    i = 0
-    for line in df:
-        if i == 0:
-            vers = line.find('creator_version')
-            #logger.info(line[vers:])
-                
-        pos_par = line.find('<parameter>')
-        if pos_par != -1:
-            s = pos_par + 11
-            e = line.find('</parameter>', s)
-            param = line[s:e]
-            paramlist.append(param)
-            
-            s = prev_line.find(' name="') + 7
-            e = prev_line.find('"', s)
-            part = prev_line[s:e]
-            partlist.append(part)
-            
-        prev_line = line
-        i += 1
-    
-    return partlist
 
 def setcolor(expType):
     '''
@@ -230,3 +192,24 @@ def chk_ascending(pandas_series):
         df['diff1'] = pandas_series.diff()
         print(f"Not ascending cum_sums: {df.loc[pandas_series.diff() < 0].shape[0]}")
     print(f'Monotonic: {pandas_series.is_monotonic}')
+
+def class_objects_to_dataframe(welds_updated):
+    '''
+    Helper function to convert list of objects to a 2d-representaion (pandas dataframe) using all attributes as columns and object as line.
+
+    Args: list of objects
+    Returns: pandas dataframe
+    '''
+    # create Dataframe from welds_updated objects
+    cols = list(welds_updated[0].__dict__.keys())
+    #cols = cols.append('duration_ms()')
+    df = pd.DataFrame()
+    for col in cols:
+        df[col] = [getattr(weld, col) for weld in welds_updated]
+    
+    # additional values via methods
+    # use t1 for temporal length and convert later to end time
+    df['t1'] = [weld.duration_ms()/1000 for weld in welds_updated]
+    # delete dropped short welds (ttlid == -1)
+    df.drop(df.loc[df.ttlid == -1].index, inplace=True)
+    return df

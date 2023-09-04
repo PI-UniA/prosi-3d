@@ -3,6 +3,99 @@ import pandas as pd
 import inspect
 import numpy as np
 
+class Weld():
+    def __init__(self, x0, y0, x1, y1, expType, prtId, x0_next, y0_next, speed, id, ttlid=None, t0=None, t1=None, t1ttl=None):
+        self.x0 = x0
+        self.y0 = y0
+        self.x1 = x1
+        self.y1 = y1
+        self.expType = expType
+        self.prtId = prtId
+        self.x0_next = x0_next
+        self.y0_next = y0_next
+        self.speed = speed
+        self.id = id
+        if ttlid == None:
+            self.ttlid = self.id
+        else:
+            self.ttlid = ttlid
+        self.t0 = t0
+        self.t1 = t1
+        self.t1ttl = t1ttl
+    
+    def dx(self):
+        dx = self.x1 - self.x0
+        return dx
+    def dx_jmp(self):
+        dx = self.x1 - self.x0_next
+        return dx
+    def dy(self):
+        dy = self.y1 - self.y0
+        return dy
+    def dy_jmp(self):
+        dy = self.y1 - self.y0_next
+        return dy
+    def angle(self):
+        angle = np.rad2deg(np.arctan2(self.dy(), self.dx()))
+        return angle
+    def dis(self):
+        x2y2 = np.power(self.dx(), 2) + np.power(self.dy(), 2)
+        dis = np.power(x2y2, 0.5)
+        return dis
+    def duration_ms(self):
+        duration = self.dis()/self.speed*1000
+        return duration
+    def changeExp(self):
+        pass
+    def dis_jmp(self):
+        x2y2 = np.power(self.dx_jmp(), 2) + np.power(self.dy_jmp(), 2)
+        dis = np.power(x2y2, 0.5)
+        return dis
+
+class Part():
+    def __init__(self, prtId, param_name):
+        self.id = prtId
+        self.param_name = param_name
+
+class ParameterSpeed():
+    def __init__(self, param_name, infill_down, infill_std, infill_up, contour_down, contour_std, contour_up, contour_simple, edge, partboundary=None, support=None, gap=None, jump=None):
+        self.name = param_name
+        #1,2,3
+        self.infill_down = infill_down
+        self.infill_std = infill_std
+        self.infill_up = infill_up
+        #4,5,6
+        self.contour_down = contour_down
+        self.contour_std = contour_std
+        self.contour_up = contour_up
+        #10
+        self.contour_simple = contour_simple
+        #7
+        self.edge = edge
+
+        # not an actual exposure
+        self.partboundary = partboundary
+        #8
+        self.support = support
+        self.gap = gap
+        self.jump = jump
+
+class Weld_ttl():
+    #'idx0_weld', 't0_weld', 'diff_idx_next_jump', 'diff_ms_next_jump', 'time2power_weld', 'idx0_next_jump', 't0_next_jump', 'diff_idx_weld', 'diff_ms_weld', 'time2power_next_jump']
+    def __init__(self, idx0_weld, t0_weld, diff_idx_next_jump, diff_ms_next_jump, time2power_weld, idx0_next_jump, t0_next_jump, diff_idx_weld, diff_ms_weld, time2power_next_jump, id):
+        self.idx0 = idx0_weld
+        self.t0 = t0_weld
+        self.idx_len_nxt_jmp = diff_idx_next_jump
+        self.duration_ms_nxt_jump = diff_ms_next_jump
+        self.t2pow = time2power_weld
+        self.idx0_nxt_jmp = idx0_next_jump
+        self.t0_nxt_jmp = t0_next_jump
+        self.idx_len = diff_idx_weld
+        self.duration_ms = diff_ms_weld
+        self.t2pow_jump_afterwards = time2power_next_jump
+        self.id = id
+        self.dur_corr = None
+
 def update_ttlid_nonjumps(welds):
     '''
     Update ttlid in weld class based on zerodistance after weld (contours).
@@ -467,3 +560,87 @@ def compare_temporal_weld_len(ttlid, welds, ttlwelds):
     welds_len = np.sum([weld.duration_ms() for weld in list(filter(criteria, welds))])
     ttlwelds_len = ttlwelds[ttlid].duration_ms
     return welds_len, ttlwelds_len
+
+def main_redefinelaserpathstarts(welds, ttlwelds):
+    '''
+    Motivation: count of eoswelds and ttlwelds differ because of measurement error
+
+    Am 26.01. verändert und solver und error_determination vereinigt
+
+    Create dataframe from classes and compute temporal weldlength error
+    While as long as count of eoswelds and ttlwelds differ
+        Calculate first/next error position and try to solve it incl. checks for success
+        recalculate dataframe
+    calculate final error position and if completed calculate eos welds_updated
+    return corrected eoswelds if full dataframe could succeeded
+
+    Args: eoswelds and ttlwelds as classes
+    Returns: corrected eoswelds
+    '''
+    ##############################################################################
+    logger = logging.getLogger(inspect.currentframe().f_code.co_name)
+    #out = '>>>>>>>>>> ' + str(inspect.getargvalues(inspect.currentframe()).locals)
+    #logger.info(out)
+    ##############################################################################
+
+    # calculate df from weld classes
+    df = corresponding_welds(welds, ttlwelds)
+    # (re-)calculate error in dataframe
+    df = corresponding_error(df)
+
+    ## approx. count of missing welds and missing jumps
+    err_forecast = test_len_diff(df)
+
+    while(test_len_diff(df)>0):
+        trial_cnt = test_len_diff(df)
+        if (err_forecast - trial_cnt)%100 == 0:
+            print(f'{(err_forecast - trial_cnt)} of approx. {err_forecast} solved.')
+        # found out last io and first error position
+        pos_err, pos_io = error_position(df)
+        logger.info(f'test_len_diff(df) = {test_len_diff(df)}')
+        logger.info(f'pos_err, pos_io = {pos_err, pos_io}')
+
+        # if pos_io >= 53619:
+        #     break
+
+        # try solution and check movement (chk >= 0: error moves forward)
+        #df_new, done_op = solver(df, pos_err, pos_io)
+        df_new = solver_error_determination(df, pos_err, pos_io)
+
+        # stop at index for debugging
+        debugging = False
+        debugging_pos_err = 23815
+        if pos_err == debugging_pos_err and debugging == True:
+            return None, df
+
+
+        #chk = chk_err_move(pos_err, df_new)
+        logger.info(f'len(df_new): {len(df_new)}')
+        df = corresponding_error(df_new)
+        
+        
+        # logger.info(f'done_op = {done_op}')
+        # logger.info(f'check = {chk}')
+        # if chk >= -1:
+        #     # if one eos entity is dropped then its position moves one forward if there is a second issue previously
+        #     # if all previous issues are solved, then loss moves forwards and chk > 0
+        #     df = corresponding_error(df_new)
+        # else:
+        #     # try else
+        #     logger.info('else entered')
+        #     break
+
+    pos_err, pos_io = error_position(df)
+    print(pos_err, pos_io)
+    if pos_err == debugging_pos_err and debugging == True:
+            return None, df
+    
+    # length difference is zero means same len of ttl and eos. pos_err and pos_io are at the end of dataframe
+    if test_len_diff(df) == 0 and pos_err == -1 and pos_io == -1:
+        print('Success!')
+
+        welds_updated = update_ttlid_solved(df, welds, ttlwelds)
+
+        return welds_updated, df, welds
+
+ 
